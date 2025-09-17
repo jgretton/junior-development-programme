@@ -20,7 +20,7 @@ return new class extends Migration
              * status
              * last logged in
              */
-            $table->string('guardian_email');
+            $table->string('guardian_email')->nullable();
             $table->enum('role', Role::cases());
             $table->enum('status', Status::cases());
             $table->timestamp('last_login_at')->nullable();            
