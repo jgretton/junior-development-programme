@@ -10,19 +10,41 @@ use Illuminate\Support\Facades\Hash;
 class DatabaseSeeder extends Seeder
 {
     /**
-     * Seed the application's database.
+     * Seed the application's database
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        /**
+         * Roles seeder
+         */
+        User::firstOrCreate(['email' => 'admin@test.com'], User::factory()->admin()->raw());
+        User::firstOrCreate(['email' => 'coach@test.com'], User::factory()->coach()->raw());
+        User::firstOrCreate(['email' => 'observer@test.com'], User::factory()->observer()->raw());
+        User::firstOrCreate(['email' => 'player@test.com'], User::factory()->player()->raw());
+        User::firstOrCreate(['email' => 'playerWithGuardian@test.com'], User::factory()->playerWithGuardian()->raw());
 
-        User::firstOrCreate(
-            ['email' => 'test@example.com'],
-            [
-                'name' => 'Test User',
-                'password' => Hash::make('password'),
-                'email_verified_at' => now(),
-            ]
-        );
+        /**
+         * Status seeder
+         */
+        User::factory()
+            ->coach()
+            ->inactive()
+            ->create(['email' => 'coach-inactive@test.com']);
+        User::factory()
+            ->player()
+            ->inactive()
+            ->create(['email' => 'player-inactive@test.com']);
+        User::factory()
+            ->player()
+            ->archived()
+            ->create(['email' => 'player-archived@test.com']);
+        User::factory()
+            ->playerWithGuardian()
+            ->inactive()
+            ->create(['email' => 'playerWithGuardian-inactive@test.com']);
+        User::factory()
+            ->playerWithGuardian()
+            ->archived()
+            ->create(['email' => 'playerWithGuardian-archived@test.com']);
     }
 }
