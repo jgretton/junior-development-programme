@@ -40,3 +40,12 @@ export interface User {
     updated_at: string;
     [key: string]: unknown; // This allows for additional properties...
 }
+
+export interface Player {
+    id: string;
+    name: string;
+    email: string;
+    guardian_email?: string;
+    status: 'active' | 'inactive' | 'archived';
+    last_login_at: string;
+}
