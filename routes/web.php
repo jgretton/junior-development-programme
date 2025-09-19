@@ -15,7 +15,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 Route::prefix('admin')
-    ->middleware(['auth'])
+    ->middleware(['auth', 'admin'])
     ->group(function () {
         Route::resource('players', PlayerController::class);
     });
