@@ -17,11 +17,11 @@ class DatabaseSeeder extends Seeder
         /**
          * Roles seeder
          */
-        User::firstOrCreate(['email' => 'admin@test.com'], User::factory()->admin()->raw());
-        User::firstOrCreate(['email' => 'coach@test.com'], User::factory()->coach()->raw());
-        User::firstOrCreate(['email' => 'observer@test.com'], User::factory()->observer()->raw());
-        User::firstOrCreate(['email' => 'player@test.com'], User::factory()->player()->raw());
-        User::firstOrCreate(['email' => 'playerWithGuardian@test.com'], User::factory()->playerWithGuardian()->raw());
+        User::firstOrCreate(['email' => 'admin@test.com'], User::factory()->admin()->active()->raw());
+        User::firstOrCreate(['email' => 'coach@test.com'], User::factory()->coach()->active()->raw());
+        User::firstOrCreate(['email' => 'observer@test.com'], User::factory()->observer()->active()->raw());
+        User::firstOrCreate(['email' => 'player@test.com'], User::factory()->player()->active()->raw());
+        User::firstOrCreate(['email' => 'playerWithGuardian@test.com'], User::factory()->playerWithGuardian()->active()->raw());
 
         /**
          * Status seeder
@@ -46,5 +46,8 @@ class DatabaseSeeder extends Seeder
             ->playerWithGuardian()
             ->archived()
             ->create(['email' => 'playerWithGuardian-archived@test.com']);
+        User::factory()
+            ->player()
+            ->create(['email' => 'playerpending@test.com']);
     }
 }

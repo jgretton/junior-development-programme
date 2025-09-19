@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import AppLayout from '@/layouts/app-layout';
 import { Player, type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/react';
-import { AlertTriangleIcon, Archive, Baby, Users } from 'lucide-react';
+import { AlertTriangleIcon, Archive, Baby, Clock, Users } from 'lucide-react';
 
 const breadcrumbs: BreadcrumbItem[] = [
   {
@@ -25,6 +25,7 @@ export default function Index({ error, players }: PageProps) {
   const activePlayers = players.filter((player) => player.status?.toLowerCase() === 'active').length;
   const inactivePlayers = players.filter((player) => player.status?.toLowerCase() === 'inactive').length;
   const archivedPlayers = players.filter((player) => player.status?.toLowerCase() === 'archived').length;
+  const pendingPlayers = players.filter((player) => player.status?.toLowerCase() === 'pending').length;
   const juniorPlayers = players.filter((player) => player.guardian_email && player.guardian_email.trim() !== '').length;
   const adultPlayers = totalPlayers - juniorPlayers;
 
@@ -51,7 +52,7 @@ export default function Index({ error, players }: PageProps) {
         </div>
       ) : (
         <div className="container mx-auto mt-10 px-4">
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Total Players</CardTitle>
@@ -78,13 +79,26 @@ export default function Index({ error, players }: PageProps) {
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Pending Invitations</CardTitle>
+                <Clock className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{pendingPlayers}</div>
+                <CardDescription className="text-xs text-muted-foreground">
+                  Awaiting registration
+                </CardDescription>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Archived Players</CardTitle>
                 <Archive className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{archivedPlayers}</div>
                 <CardDescription className="text-xs text-muted-foreground">
-                  {((archivedPlayers / totalPlayers) * 100).toFixed(1)}% of total
+                  {totalPlayers > 0 ? ((archivedPlayers / totalPlayers) * 100).toFixed(1) : 0}% of total
                 </CardDescription>
               </CardContent>
             </Card>

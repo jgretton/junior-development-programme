@@ -2,7 +2,7 @@ import { Player } from '@/types';
 import { ColumnDef } from '@tanstack/react-table';
 import { Badge } from '../ui/badge';
 
-import { ArrowUpDown, CopyIcon, Edit2Icon, MoreHorizontal, Trash2Icon } from 'lucide-react';
+import { Archive, ArrowUpDown, CheckCircle, Clock, CopyIcon, Edit2Icon, MoreHorizontal, Pause, Trash2Icon } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -67,22 +67,49 @@ export const columns: ColumnDef<Player>[] = [
     },
     cell: ({ row }) => {
       const status = row.getValue('status') as string;
-      const getVariant = (status: string) => {
+
+      const getStatusConfig = (status: string) => {
         switch (status.toLowerCase()) {
           case 'active':
-            return 'default';
+            return {
+              variant: 'default' as const,
+              icon: CheckCircle,
+              className: 'bg-green-100 text-green-800 border-green-200 hover:bg-green-200'
+            };
           case 'inactive':
-            return 'secondary';
+            return {
+              variant: 'secondary' as const,
+              icon: Pause,
+              className: 'bg-gray-100 text-gray-800 border-gray-200 hover:bg-gray-200'
+            };
+          case 'pending':
+            return {
+              variant: 'outline' as const,
+              icon: Clock,
+              className: 'bg-yellow-100 text-yellow-800 border-yellow-200 hover:bg-yellow-200'
+            };
           case 'archived':
-            return 'outline';
+            return {
+              variant: 'destructive' as const,
+              icon: Archive,
+              className: 'bg-red-100 text-red-800 border-red-200 hover:bg-red-200'
+            };
           default:
-            return 'secondary';
+            return {
+              variant: 'secondary' as const,
+              icon: Pause,
+              className: 'bg-gray-100 text-gray-800 border-gray-200 hover:bg-gray-200'
+            };
         }
       };
 
+      const config = getStatusConfig(status);
+      const IconComponent = config.icon;
+
       return (
         <div className="text-center">
-          <Badge className="" variant={getVariant(status)}>
+          <Badge className={config.className} variant={config.variant}>
+            <IconComponent className="mr-1 h-3 w-3" />
             {status}
           </Badge>
         </div>

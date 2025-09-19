@@ -31,7 +31,7 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => (static::$password ??= Hash::make('password')),
             'remember_token' => Str::random(10),
-            'status' => Status::ACTIVE,
+            'status' => Status::PENDING,
             'guardian_email' => null,
         ];
     }
@@ -91,6 +91,12 @@ class UserFactory extends Factory
     /**
      * Status functions
      */
+    public function active()
+    {
+        return $this->state([
+            'status' => Status::ACTIVE,
+        ]);
+    }
     public function inactive()
     {
         return $this->state([
