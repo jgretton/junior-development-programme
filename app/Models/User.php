@@ -20,22 +20,14 @@ class User extends Authenticatable
      *
      * @var list<string>
      */
-    protected $fillable = [
-        'name',
-        'email',
-        'password',
-        'guardian_email'
-    ];
+    protected $fillable = ['name', 'email', 'password', 'guardian_email', 'signup_token'];
 
     /**
      * The attributes that should be hidden for serialization.
      *
      * @var list<string>
      */
-    protected $hidden = [
-        'password',
-        'remember_token',
-    ];
+    protected $hidden = ['password', 'remember_token', 'signup_token', 'signup_token_expires_at'];
 
     /**
      * Get the attributes that should be cast.
@@ -49,7 +41,8 @@ class User extends Authenticatable
             'password' => 'hashed',
             'last_login_at' => 'datetime',
             'role' => Role::class,
-            'status' => Status::class
+            'status' => Status::class,
+            'signup_token_expires_at' => 'datetime',
         ];
     }
 }
