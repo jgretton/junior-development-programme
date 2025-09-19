@@ -2,7 +2,7 @@ import { Player } from '@/types';
 import { ColumnDef } from '@tanstack/react-table';
 import { Badge } from '../ui/badge';
 
-import { ArrowUpDown, MoreHorizontal } from 'lucide-react';
+import { ArrowUpDown, CopyIcon, Edit2Icon, MoreHorizontal, Trash2Icon } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -128,8 +128,6 @@ export const columns: ColumnDef<Player>[] = [
   {
     id: 'actions',
     cell: ({ row }) => {
-      const payment = row.original;
-
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -140,10 +138,19 @@ export const columns: ColumnDef<Player>[] = [
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => navigator.clipboard.writeText(payment.id)}>Copy payment ID</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigator.clipboard.writeText(row.getValue('email'))}>
+              <CopyIcon className="size-3 text-gray-500" />
+              Copy Player Email
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>View customer</DropdownMenuItem>
-            <DropdownMenuItem>View payment details</DropdownMenuItem>
+            <DropdownMenuItem>
+              <Edit2Icon className="size-3 text-gray-500" />
+              Edit Player
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <Trash2Icon className="size-3 text-red-500" />
+              Delete Player
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       );
