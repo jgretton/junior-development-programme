@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
 class PlayerController extends Controller
@@ -17,12 +18,35 @@ class PlayerController extends Controller
         /**
          * Returning all players
          */
-        $players = User::where('role', Role::PLAYER)
-            ->select(['id', 'name', 'email', 'status', 'guardian_email', 'last_login_at'])
-            ->get();
-        return Inertia::render('players/index', [
-            'players' => $players,
-        ]);
+        // $players = User::where('role', Role::PLAYER)
+        //     ->select(['id', 'name', 'email', 'status', 'guardian_email', 'last_login_at'])
+        //     ->get();
+        // return Inertia::render('players/index', [
+        //     'players' => $players,
+        // ]);
+        // Force database error for testing
+
+        try {
+            $players = User::where('role', Role::PLAYER)
+                ->select(['id', 'name', 'email', 'status', 'guardian_email', 'last_login_at'])
+                ->get();
+
+            return Inertia::render('players/index', [
+                'players' => $players,
+            ]);
+        } catch (\Exception $e) {
+            // Log the actual error for debugging
+            Log::error('PlayerController@index failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            // Return user-friendly message regardless of error type
+            return Inertia::render('players/index', [
+                'players' => [],
+                'error' => 'Unable to load players. Please try again or contact support if this continues.',
+            ]);
+        }
     }
 
     /**
