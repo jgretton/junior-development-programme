@@ -1,12 +1,13 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Admin;
 
 use App\Enums\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
+use App\Http\Controllers\Controller;
 
 class PlayerController extends Controller
 {
@@ -18,20 +19,13 @@ class PlayerController extends Controller
         /**
          * Returning all players
          */
-        // $players = User::where('role', Role::PLAYER)
-        //     ->select(['id', 'name', 'email', 'status', 'guardian_email', 'last_login_at'])
-        //     ->get();
-        // return Inertia::render('players/index', [
-        //     'players' => $players,
-        // ]);
-        // Force database error for testing
 
         try {
             $players = User::where('role', Role::PLAYER)
                 ->select(['id', 'name', 'email', 'status', 'guardian_email', 'last_login_at'])
                 ->get();
 
-            return Inertia::render('players/index', [
+            return Inertia::render('admin/players/index', [
                 'players' => $players,
             ]);
         } catch (\Exception $e) {
@@ -42,7 +36,7 @@ class PlayerController extends Controller
             ]);
 
             // Return user-friendly message regardless of error type
-            return Inertia::render('players/index', [
+            return Inertia::render('admin/players/index', [
                 'players' => [],
                 'error' => 'Unable to load players. Please try again or contact support if this continues.',
             ]);
