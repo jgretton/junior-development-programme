@@ -1,3 +1,4 @@
+import PlayerController from '@/actions/App/Http/Controllers/Admin/PlayerController';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -18,15 +19,15 @@ import InputError from '../input-error';
 export default function AddPlayerModal() {
   return (
     <Dialog>
-      <Form>
-        {({ processing, errors }) => (
-          <>
-            <DialogTrigger asChild>
-              <Button>
-                <PlusIcon /> Add New Player
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]" onInteractOutside={(e) => e.preventDefault()}>
+      <DialogTrigger asChild>
+        <Button type="button">
+          <PlusIcon /> Add New Player
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[425px]" onInteractOutside={(e) => e.preventDefault()}>
+        <Form {...PlayerController.store.form()} resetOnSuccess>
+          {({ processing, errors }) => (
+            <div className="grid gap-5">
               <DialogHeader>
                 <DialogTitle>Add New Player</DialogTitle>
                 <DialogDescription>Make changes to your profile here. Click save when you&apos;re done.</DialogDescription>
@@ -44,24 +45,26 @@ export default function AddPlayerModal() {
                 </div>
                 <div className="grid gap-3">
                   <Label htmlFor="guardian_email">Guardian Email</Label>
-                  <span className="text-xs text-muted-foreground">Only required if player is a junior</span>
+                  <span className="-mt-2 text-xs text-muted-foreground">Only required if player is a junior</span>
                   <Input id="guardian_email" name="guardian_email" type="email" />
                   <InputError message={errors.guardian_email} />
                 </div>
               </div>
               <DialogFooter>
                 <DialogClose asChild>
-                  <Button variant="outline">Cancel</Button>
+                  <Button type="button" variant="outline">
+                    Cancel
+                  </Button>
                 </DialogClose>
-                <Button type="submit" disabled={processing}>
+                <Button type="submit" disabled={processing} data-test="">
                   {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
                   Send Email Invite
                 </Button>
               </DialogFooter>
-            </DialogContent>
-          </>
-        )}
-      </Form>
+            </div>
+          )}
+        </Form>
+      </DialogContent>
     </Dialog>
   );
 }

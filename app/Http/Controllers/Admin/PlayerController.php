@@ -3,11 +3,14 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Enums\Role;
+use App\Enums\Status;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StorePlayerRequest;
+use Illuminate\Support\Str;
 
 class PlayerController extends Controller
 {
@@ -54,9 +57,20 @@ class PlayerController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StorePlayerRequest $request)
     {
         //
+        $token = Str::uuid()->toString();
+        $user = User::create([
+            'name' => $request->validated()['name'],
+            'email' => $request->validated()['email'],
+            'guardian_email' => $request->validated()['guardian_email'],
+            'status' => Status::PENDING,
+            'role' => Role::PLAYER,
+            'signup_token' => $token,
+            'signup_token_expires_at' => now()->addDays(30),
+        ]);
+        // dd($request->validated());
     }
 
     /**
