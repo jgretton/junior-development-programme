@@ -59,18 +59,31 @@ class PlayerController extends Controller
      */
     public function store(StorePlayerRequest $request)
     {
-        //
-        $token = Str::uuid()->toString();
-        $user = User::create([
-            'name' => $request->validated()['name'],
-            'email' => $request->validated()['email'],
-            'guardian_email' => $request->validated()['guardian_email'],
-            'status' => Status::PENDING,
-            'role' => Role::PLAYER,
-            'signup_token' => $token,
-            'signup_token_expires_at' => now()->addDays(30),
-        ]);
-        // dd($request->validated());
+        try {
+            $token = Str::uuid()->toString();
+            $user = User::create([
+                'name' => $request->validated()['name'],
+                'email' => $request->validated()['email'],
+                'guardian_email' => $request->validated()['guardian_email'],
+                'status' => Status::PENDING,
+                'role' => Role::PLAYER,
+                'signup_token' => $token,
+                'signup_token_expires_at' => now()->addDays(30),
+            ]);
+
+            return redirect()->route('players.index')->with('success', 'Player invited successfully!');
+        } catch (\Exception $e) {
+            Log::error('PlayerController@store failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'request_data' => $request->validated(),
+            ]);
+
+            return redirect()
+                ->back()
+                ->withErrors(['general' => $e->getMessage()])
+                ->withInput();
+        }
     }
 
     /**

@@ -5,10 +5,13 @@ import AddPlayerModal from '@/components/modals/add-player-modal';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Toaster } from '@/components/ui/sonner';
 import AppLayout from '@/layouts/app-layout';
 import { Player, type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/react';
 import { AlertTriangleIcon, Archive, Baby, Clock, Users } from 'lucide-react';
+import * as React from 'react';
+import { toast } from 'sonner';
 
 const breadcrumbs: BreadcrumbItem[] = [
   {
@@ -20,16 +23,33 @@ const breadcrumbs: BreadcrumbItem[] = [
 interface PageProps {
   players: Player[];
   error: string;
+  flash: { error: string; success: string };
 }
 
-export default function Index({ error, players }: PageProps) {
-  const totalPlayers = players.length;
-  const activePlayers = players.filter((player) => player.status?.toLowerCase() === 'active').length;
-  const inactivePlayers = players.filter((player) => player.status?.toLowerCase() === 'inactive').length;
-  const archivedPlayers = players.filter((player) => player.status?.toLowerCase() === 'archived').length;
-  const pendingPlayers = players.filter((player) => player.status?.toLowerCase() === 'pending').length;
-  const juniorPlayers = players.filter((player) => player.guardian_email && player.guardian_email.trim() !== '').length;
-  const adultPlayers = totalPlayers - juniorPlayers;
+export default function Index({ error, players, flash }: PageProps) {
+  const stats = React.useMemo(() => {
+    const total = players.length;
+    const active = players.filter((player) => player.status?.toLowerCase() === 'active').length;
+    const inactive = players.filter((player) => player.status?.toLowerCase() === 'inactive').length;
+    const archived = players.filter((player) => player.status?.toLowerCase() === 'archived').length;
+    const pending = players.filter((player) => player.status?.toLowerCase() === 'pending').length;
+    const junior = players.filter((player) => player.guardian_email && player.guardian_email.trim() !== '').length;
+
+    return {
+      total,
+      active,
+      inactive,
+      archived,
+      pending,
+      junior,
+      adult: total - junior,
+    };
+  }, [players]);
+
+  React.useEffect(() => {
+    if (flash.success) toast.success(flash.success);
+    if (flash.error) toast.error(flash.error);
+  }, [flash]);
 
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
@@ -63,9 +83,9 @@ export default function Index({ error, players }: PageProps) {
                 <Users className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{totalPlayers}</div>
+                <div className="text-2xl font-bold">{stats.total}</div>
                 <CardDescription className="text-xs text-muted-foreground">
-                  {activePlayers} active, {inactivePlayers} inactive
+                  {stats.active} active, {stats.inactive} inactive
                 </CardDescription>
               </CardContent>
             </Card>
@@ -76,8 +96,8 @@ export default function Index({ error, players }: PageProps) {
                 <Baby className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{juniorPlayers}</div>
-                <CardDescription className="text-xs text-muted-foreground">{adultPlayers} adult players</CardDescription>
+                <div className="text-2xl font-bold">{stats.junior}</div>
+                <CardDescription className="text-xs text-muted-foreground">{stats.adult} adult players</CardDescription>
               </CardContent>
             </Card>
 
@@ -87,7 +107,7 @@ export default function Index({ error, players }: PageProps) {
                 <Clock className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{pendingPlayers}</div>
+                <div className="text-2xl font-bold">{stats.pending}</div>
                 <CardDescription className="text-xs text-muted-foreground">Awaiting registration</CardDescription>
               </CardContent>
             </Card>
@@ -98,9 +118,9 @@ export default function Index({ error, players }: PageProps) {
                 <Archive className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{archivedPlayers}</div>
+                <div className="text-2xl font-bold">{stats.archived}</div>
                 <CardDescription className="text-xs text-muted-foreground">
-                  {totalPlayers > 0 ? ((archivedPlayers / totalPlayers) * 100).toFixed(1) : 0}% of total
+                  {stats.total > 0 ? ((stats.archived / stats.total) * 100).toFixed(1) : 0}% of total
                 </CardDescription>
               </CardContent>
             </Card>
@@ -110,6 +130,8 @@ export default function Index({ error, players }: PageProps) {
           </div>
         </div>
       )}
+
+      <Toaster richColors expand position="top-center" />
     </AppLayout>
   );
 }

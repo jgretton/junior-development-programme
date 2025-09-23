@@ -14,18 +14,20 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Form } from '@inertiajs/react';
 import { LoaderCircle, PlusIcon } from 'lucide-react';
+import { useState } from 'react';
 import InputError from '../input-error';
 
 export default function AddPlayerModal() {
+  const [open, setOpen] = useState<boolean>(false);
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button type="button">
           <PlusIcon /> Add New Player
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]" onInteractOutside={(e) => e.preventDefault()}>
-        <Form {...PlayerController.store.form()} resetOnSuccess>
+        <Form {...PlayerController.store.form()} resetOnSuccess onSuccess={() => setOpen(false)}>
           {({ processing, errors }) => (
             <div className="grid gap-5">
               <DialogHeader>
