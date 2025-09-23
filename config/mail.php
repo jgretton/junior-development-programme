@@ -1,7 +1,6 @@
 <?php
 
 return [
-
     /*
     |--------------------------------------------------------------------------
     | Default Mailer
@@ -36,7 +35,6 @@ return [
     */
 
     'mailers' => [
-
         'smtp' => [
             'transport' => 'smtp',
             'scheme' => env('MAIL_SCHEME'),
@@ -81,20 +79,13 @@ return [
 
         'failover' => [
             'transport' => 'failover',
-            'mailers' => [
-                'smtp',
-                'log',
-            ],
+            'mailers' => ['smtp', 'log'],
         ],
 
         'roundrobin' => [
             'transport' => 'roundrobin',
-            'mailers' => [
-                'ses',
-                'postmark',
-            ],
+            'mailers' => ['ses', 'postmark'],
         ],
-
     ],
 
     /*
@@ -110,7 +101,6 @@ return [
 
     'from' => [
         'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
-        'name' => env('MAIL_FROM_NAME', 'Example'),
+        'name' => env('MAIL_FROM_NAME', 'Naz Sutton'),
     ],
-
 ];

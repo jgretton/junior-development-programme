@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StorePlayerRequest;
+use App\Mail\PlayerInvitation;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 class PlayerController extends Controller
@@ -60,6 +62,9 @@ class PlayerController extends Controller
     public function store(StorePlayerRequest $request)
     {
         try {
+            // $validated = $request->validated();
+            // dd($validated); // ← What does this show?
+
             $token = Str::uuid()->toString();
             $user = User::create([
                 'name' => $request->validated()['name'],
@@ -70,6 +75,8 @@ class PlayerController extends Controller
                 'signup_token' => $token,
                 'signup_token_expires_at' => now()->addDays(30),
             ]);
+
+            Mail::to($user->email)->send(new PlayerInvitation($user));
 
             return redirect()->route('players.index')->with('success', 'Player invited successfully!');
         } catch (\Exception $e) {
