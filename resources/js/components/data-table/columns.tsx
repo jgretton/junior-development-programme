@@ -74,31 +74,31 @@ export const columns: ColumnDef<Player>[] = [
             return {
               variant: 'default' as const,
               icon: CheckCircle,
-              className: 'bg-green-100 text-green-800 border-green-200 hover:bg-green-200'
+              className: 'bg-green-100 text-green-800 border-green-200 hover:bg-green-200',
             };
           case 'inactive':
             return {
               variant: 'secondary' as const,
               icon: Pause,
-              className: 'bg-gray-100 text-gray-800 border-gray-200 hover:bg-gray-200'
+              className: 'bg-gray-100 text-gray-800 border-gray-200 hover:bg-gray-200',
             };
           case 'pending':
             return {
               variant: 'outline' as const,
               icon: Clock,
-              className: 'bg-yellow-100 text-yellow-800 border-yellow-200 hover:bg-yellow-200'
+              className: 'bg-yellow-100 text-yellow-800 border-yellow-200 hover:bg-yellow-200',
             };
           case 'archived':
             return {
               variant: 'destructive' as const,
               icon: Archive,
-              className: 'bg-red-100 text-red-800 border-red-200 hover:bg-red-200'
+              className: 'bg-red-100 text-red-800 border-red-200 hover:bg-red-200',
             };
           default:
             return {
               variant: 'secondary' as const,
               icon: Pause,
-              className: 'bg-gray-100 text-gray-800 border-gray-200 hover:bg-gray-200'
+              className: 'bg-gray-100 text-gray-800 border-gray-200 hover:bg-gray-200',
             };
         }
       };
@@ -154,7 +154,8 @@ export const columns: ColumnDef<Player>[] = [
   },
   {
     id: 'actions',
-    cell: ({ row }) => {
+    cell: ({ row, table }) => {
+      const meta = table.options.meta as { editPlayer?: (player: Player) => void; deletePlayer?: (player: Player) => void };
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -170,11 +171,11 @@ export const columns: ColumnDef<Player>[] = [
               Copy Player Email
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => meta?.editPlayer?.(row.original)}>
               <Edit2Icon className="size-3 text-gray-500" />
               Edit Player
             </DropdownMenuItem>
-            <DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => meta?.deletePlayer?.(row.original)}>
               <Trash2Icon className="size-3 text-red-500" />
               Delete Player
             </DropdownMenuItem>

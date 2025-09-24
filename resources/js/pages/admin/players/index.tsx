@@ -2,7 +2,9 @@ import { columns } from '@/components/data-table/columns';
 import { DataTable } from '@/components/data-table/data-table';
 import Heading from '@/components/heading';
 import AddPlayerModal from '@/components/modals/add-player-modal';
+import DeleteUserModal from '@/components/modals/delete-user-modal';
 import MassAddPlayerModal from '@/components/modals/mass-add-player-modal';
+import UpdatePlayerSheet from '@/components/sheets/update-player-sheet';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -28,6 +30,9 @@ interface PageProps {
 }
 
 export default function Index({ error, players, flash }: PageProps) {
+  const [editingPlayer, setEditingPlayer] = React.useState<Player | null>();
+  const [deletingPlayer, setDeletingPlayer] = React.useState<Player | null>();
+
   const stats = React.useMemo(() => {
     const total = players.length;
     const active = players.filter((player) => player.status?.toLowerCase() === 'active').length;
@@ -130,7 +135,14 @@ export default function Index({ error, players, flash }: PageProps) {
             </Card>
           </div>
           <div className="mt-10">
-            <DataTable columns={columns} data={players} />
+            <DataTable columns={columns} data={players} onEditPlayer={setEditingPlayer} onDeletePlayer={setDeletingPlayer} />
+            <UpdatePlayerSheet player={editingPlayer} open={!!editingPlayer} onOpenChange={(open) => !open && setEditingPlayer(null)} />
+            <DeleteUserModal
+              type="player"
+              player={deletingPlayer}
+              open={!!deletingPlayer}
+              onOpenChange={(open) => !open && setDeletingPlayer(null)}
+            />
           </div>
         </div>
       )}

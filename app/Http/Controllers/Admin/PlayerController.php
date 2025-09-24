@@ -10,7 +10,9 @@ use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StorePlayerRequest;
+use App\Http\Requests\UpdatePlayerRequest;
 use App\Mail\PlayerInvitation;
+use Faker\Guesser\Name;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
@@ -76,7 +78,7 @@ class PlayerController extends Controller
                 'signup_token_expires_at' => now()->addDays(30),
             ]);
 
-            Mail::to($user->email)->send(new PlayerInvitation($user));
+            // Mail::to($user->email)->send(new PlayerInvitation($user));
 
             return redirect()->route('players.index')->with('success', 'Player invited successfully!');
         } catch (\Exception $e) {
@@ -112,16 +114,52 @@ class PlayerController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, User $user)
+    public function update(UpdatePlayerRequest $request, User $player)
     {
-        //
+        try {
+            $validated = $request->validated();
+
+            $updateData = [
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'guardian_email' => $validated['guardian_email'] ?? null,
+            ];
+
+            // Only allow status changes for non-pending users
+            if ($player->status !== 'pending') {
+                $updateData['status'] = $validated['status'];
+            }
+
+            $player->update($updateData);
+
+            return redirect()->route('players.index')->with('success', 'Player updated successfully!');
+        } catch (\Exception $e) {
+            Log::error('PlayerController@update failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'request_data' => $request->validated(),
+                'player_id' => $player->id,
+            ]);
+
+            return redirect()
+                ->back()
+                ->withErrors(['general' => 'Failed to update player. Please try again.'])
+                ->withInput();
+        }
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(User $user)
+    public function destroy(User $player)
     {
         //
+        try {
+            $player->delete();
+            return redirect()->back()->with('success', 'Player deleted successfully');
+        } catch (\Exception $e) {
+            Log::error('Player deletion failed', ['player_id' => $player->id]);
+            return redirect()->back()->with('error', 'Failed to delete player');
+        }
     }
 }

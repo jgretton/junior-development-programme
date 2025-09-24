@@ -17,7 +17,6 @@ interface PageProps {
 }
 
 export default function Register({ user, token }: PageProps) {
-  console.log(token);
   return (
     <AuthLayout title="Finish Your Registration" description="You're almost there! Create a secure password to access your account">
       <Head title="Register" />

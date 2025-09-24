@@ -46,6 +46,6 @@ export interface Player {
     name: string;
     email: string;
     guardian_email?: string;
-    status: 'active' | 'inactive' | 'archived';
+    status: 'active' | 'inactive' | 'archived' | 'pending';
     last_login_at: string;
 }
