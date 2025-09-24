@@ -2,6 +2,7 @@ import { columns } from '@/components/data-table/columns';
 import { DataTable } from '@/components/data-table/data-table';
 import Heading from '@/components/heading';
 import AddPlayerModal from '@/components/modals/add-player-modal';
+import MassAddPlayerModal from '@/components/modals/mass-add-player-modal';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -74,7 +75,10 @@ export default function Index({ error, players, flash }: PageProps) {
         <div className="container mx-auto mt-10 px-4">
           <div className="flex flex-row justify-between">
             <Heading title="Players" />
-            <AddPlayerModal />
+            <div className="flex">
+              <AddPlayerModal />
+              <MassAddPlayerModal />
+            </div>
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <Card>

@@ -22,7 +22,7 @@ export default function AddPlayerModal() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button type="button">
+        <Button type="button" className="rounded-r-none">
           <PlusIcon /> Add New Player
         </Button>
       </DialogTrigger>
