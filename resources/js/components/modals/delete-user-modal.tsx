@@ -1,3 +1,4 @@
+import CoachesController from '@/actions/App/Http/Controllers/Admin/CoachesController';
 import PlayerController from '@/actions/App/Http/Controllers/Admin/PlayerController';
 import {
   AlertDialog,
@@ -20,8 +21,21 @@ interface PageProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export default function DeleteUserModal({ player, open, onOpenChange }: PageProps) {
+export default function DeleteUserModal({ type, player, open, onOpenChange }: PageProps) {
   if (!player) return null;
+
+  console.log(player.id);
+
+  const getFormProps = () => {
+    switch (type) {
+      case 'player':
+        return PlayerController.destroy.form(parseInt(player.id));
+      case 'coach':
+        return CoachesController.destroy.form({ id: parseInt(player.id) });
+      default:
+        throw new Error(`Unsupported type: ${type}`);
+    }
+  };
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -51,7 +65,7 @@ export default function DeleteUserModal({ player, open, onOpenChange }: PageProp
             </div>
             <AlertDialogFooter className="mt-6 w-full">
               <AlertDialogCancel className="w-full">Cancel</AlertDialogCancel>
-              <Form {...PlayerController.destroy.form(parseInt(player.id))} onSubmitComplete={() => onOpenChange(false)} className="w-full">
+              <Form {...getFormProps()} onSubmitComplete={() => onOpenChange(false)} className="w-full">
                 {({ processing }) => (
                   <Button variant="destructive" className="w-full" disabled={processing}>
                     {processing ? (

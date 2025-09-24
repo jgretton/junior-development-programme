@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\CoachesController;
 use App\Http\Controllers\Admin\PlayerController;
 use App\Mail\PlayerInvitation;
 use Illuminate\Support\Facades\Route;
@@ -19,6 +20,7 @@ Route::prefix('admin')
     ->middleware(['auth', 'admin'])
     ->group(function () {
         Route::resource('players', PlayerController::class);
+        Route::resource('coaches', CoachesController::class);
     });
 
 Route::get('/emails', function () {

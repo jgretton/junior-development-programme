@@ -2,6 +2,7 @@ import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
+import coaches from '@/routes/coaches';
 import players from '@/routes/players';
 import { SharedData, type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
@@ -24,7 +25,7 @@ const adminNavItems: NavItem[] = [
   },
   {
     title: 'Coaches',
-    href: players.index(),
+    href: coaches.index(),
     icon: IdCardLanyard,
   },
 ];

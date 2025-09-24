@@ -1,9 +1,9 @@
-import PlayerController from '@/actions/App/Http/Controllers/Admin/PlayerController';
+import CoachesController from '@/actions/App/Http/Controllers/Admin/CoachesController';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Player } from '@/types';
 import { Form } from '@inertiajs/react';
-import { LoaderCircle, Plus, Trash2 } from 'lucide-react';
+import { LoaderCircle } from 'lucide-react';
 import React from 'react';
 import InputError from '../input-error';
 import { Button } from '../ui/button';
@@ -16,31 +16,22 @@ interface UpdatePlayerSheetProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export default function UpdatePlayerSheet({ player, open, onOpenChange }: UpdatePlayerSheetProps) {
-  const [showGuardian, setShowGuardian] = React.useState<boolean>(false);
-  const guardianInputRef = React.useRef<HTMLInputElement>(null);
+export default function UpdateCoachSheet({ player, open, onOpenChange }: UpdatePlayerSheetProps) {
   const [lastValidPlayer, setLastValidPlayer] = React.useState<Player | null>(null);
 
   React.useEffect(() => {
     if (player) {
-      setShowGuardian(!!player.guardian_email);
       setLastValidPlayer(player);
     }
   }, [player]);
 
-  const handleRemoveGuardian = () => {
-    if (guardianInputRef.current) {
-      guardianInputRef.current.value = '';
-    }
-    setShowGuardian(false);
-  };
   if (!player?.id && open) {
     return (
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent>
           <SheetHeader>
-            <SheetTitle>Unable to Load Player</SheetTitle>
-            <SheetDescription>The selected player could not be found or loaded.</SheetDescription>
+            <SheetTitle>Unable to Load Coach</SheetTitle>
+            <SheetDescription>The selected coach could not be found or loaded.</SheetDescription>
           </SheetHeader>
           <div className="flex flex-1 items-center justify-center p-8">
             <div className="space-y-4 text-center">
@@ -48,9 +39,9 @@ export default function UpdatePlayerSheet({ player, open, onOpenChange }: Update
                 <span className="text-xl text-gray-400">⚠️</span>
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-900">Player not found</p>
+                <p className="text-sm font-medium text-gray-900">Coach not found</p>
                 <p className="mt-1 text-xs text-gray-500">
-                  The player you're trying to edit may have been deleted or there was an error loading the data.
+                  The coach you're trying to edit may have been deleted or there was an error loading the data.
                 </p>
               </div>
               <Button variant="outline" onClick={() => onOpenChange(false)}>
@@ -74,10 +65,10 @@ export default function UpdatePlayerSheet({ player, open, onOpenChange }: Update
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent>
         <SheetHeader>
-          <SheetTitle>Edit Player Details</SheetTitle>
-          <SheetDescription>Update player information and settings. Changes will be saved when you click "Save changes".</SheetDescription>
+          <SheetTitle>Edit Coach Details</SheetTitle>
+          <SheetDescription>Update coach information and settings. Changes will be saved when you click "Save changes".</SheetDescription>
         </SheetHeader>
-        <Form {...PlayerController.update.form({ player: parseInt(displayPlayer.id) })} disableWhileProcessing onSuccess={() => onOpenChange(false)}>
+        <Form {...CoachesController.update.form({ id: parseInt(displayPlayer.id) })} disableWhileProcessing onSuccess={() => onOpenChange(false)}>
           {({ processing, errors }) => (
             <>
               <div className="grid flex-1 auto-rows-min gap-6 px-4">
@@ -101,7 +92,7 @@ export default function UpdatePlayerSheet({ player, open, onOpenChange }: Update
                           Pending Registration
                         </div>
                       </div>
-                      <p className="text-xs text-gray-600">Status cannot be changed until player completes registration.</p>
+                      <p className="text-xs text-gray-600">Status cannot be changed until coach completes registration.</p>
                       <Button variant="outline" className="w-full" type="button">
                         Resend Invitation Link
                       </Button>
@@ -125,41 +116,24 @@ export default function UpdatePlayerSheet({ player, open, onOpenChange }: Update
                   )}
                   <InputError message={errors.status} />
                 </div>
-                {showGuardian ? (
-                  <div className="grid gap-3">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="guardian-email">Guardian Email</Label>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleRemoveGuardian}
-                        className="h-auto p-1 text-xs text-red-600 hover:bg-red-50 hover:text-red-700">
-                        <Trash2 className="mr-1 h-3 w-3" />
-                        Remove Guardian
-                      </Button>
-                    </div>
-                    <Input
-                      ref={guardianInputRef}
-                      id="guardian-email"
-                      name="guardian_email"
-                      type="email"
-                      placeholder="guardian@example.com"
-                      defaultValue={displayPlayer?.guardian_email || ''}
-                    />
-                    <p className="text-xs text-muted-foreground">Required for players under 18 years old</p>
-                    <InputError message={errors.guardian_email} />
-                  </div>
-                ) : (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    onClick={() => setShowGuardian(true)}
-                    className="flex w-full items-center justify-start gap-2 rounded-md border border-dashed border-gray-300 p-4 text-left hover:bg-gray-50">
-                    <Plus className="h-4 w-4 text-gray-500" />
-                    <span className="text-gray-600">Add Guardian Email</span>
-                  </Button>
-                )}
+                <div className="grid gap-3">
+                  <Label htmlFor="role">Role</Label>
+                  <Select name="role" defaultValue={displayPlayer?.role?.toLowerCase()}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select Role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectLabel>Role</SelectLabel>
+                        <SelectItem value="admin">Admin</SelectItem>
+                        <SelectItem value="junior_development_coach">Junior Dev Coach</SelectItem>
+                        <SelectItem value="observer">Observer</SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+
+                  <InputError message={errors.role} />
+                </div>
               </div>
 
               <SheetFooter>
