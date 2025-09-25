@@ -2,7 +2,7 @@ import CoachesController from '@/actions/App/Http/Controllers/Admin/CoachesContr
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Player } from '@/types';
-import { Form } from '@inertiajs/react';
+import { Form, router } from '@inertiajs/react';
 import { LoaderCircle } from 'lucide-react';
 import React from 'react';
 import InputError from '../input-error';
@@ -18,6 +18,7 @@ interface UpdatePlayerSheetProps {
 
 export default function UpdateCoachSheet({ player, open, onOpenChange }: UpdatePlayerSheetProps) {
   const [lastValidPlayer, setLastValidPlayer] = React.useState<Player | null>(null);
+  const [isResendingInvitation, setIsResendingInvitation] = React.useState(false);
 
   React.useEffect(() => {
     if (player) {
@@ -63,14 +64,18 @@ export default function UpdateCoachSheet({ player, open, onOpenChange }: UpdateP
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent>
+      <SheetContent className="size-full">
         <SheetHeader>
           <SheetTitle>Edit Coach Details</SheetTitle>
           <SheetDescription>Update coach information and settings. Changes will be saved when you click "Save changes".</SheetDescription>
         </SheetHeader>
-        <Form {...CoachesController.update.form({ id: parseInt(displayPlayer.id) })} disableWhileProcessing onSuccess={() => onOpenChange(false)}>
+        <Form
+          {...CoachesController.update.form({ id: parseInt(displayPlayer.id) })}
+          disableWhileProcessing
+          onSuccess={() => onOpenChange(false)}
+          className="flex-1">
           {({ processing, errors }) => (
-            <>
+            <div className="flex size-full flex-col justify-between">
               <div className="grid flex-1 auto-rows-min gap-6 px-4">
                 <div className="grid gap-3">
                   <Label htmlFor="name">Name</Label>
@@ -93,8 +98,23 @@ export default function UpdateCoachSheet({ player, open, onOpenChange }: UpdateP
                         </div>
                       </div>
                       <p className="text-xs text-gray-600">Status cannot be changed until coach completes registration.</p>
-                      <Button variant="outline" className="w-full" type="button">
-                        Resend Invitation Link
+                      <Button
+                        variant="outline"
+                        className="w-full"
+                        type="button"
+                        disabled={isResendingInvitation}
+                        onClick={() => {
+                          setIsResendingInvitation(true);
+                          router.post(
+                            CoachesController.resendInvitation.url({ id: parseInt(displayPlayer.id) }),
+                            {},
+                            {
+                              onFinish: () => setIsResendingInvitation(false),
+                            }
+                          );
+                        }}>
+                        {isResendingInvitation ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : null}
+                        {isResendingInvitation ? 'Sending invitation' : 'Resend Invitation Link'}
                       </Button>
                       {/* Hidden input to prevent client-side validation error */}
                       <input type="hidden" name="status" value="pending" />
@@ -136,7 +156,7 @@ export default function UpdateCoachSheet({ player, open, onOpenChange }: UpdateP
                 </div>
               </div>
 
-              <SheetFooter>
+              <SheetFooter className="">
                 <Button type="submit" disabled={processing}>
                   {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
                   Save changes
@@ -147,7 +167,7 @@ export default function UpdateCoachSheet({ player, open, onOpenChange }: UpdateP
                   </Button>
                 </SheetClose>
               </SheetFooter>
-            </>
+            </div>
           )}
         </Form>
       </SheetContent>

@@ -209,16 +209,19 @@ export const coaches_columns: ColumnDef<Player>[] = [
               <DropdownMenuSeparator />
               {isPending && (
                 <>
-                  <DropdownMenuItem asChild>
-                    <Form {...CoachesController.resendInvitation.form({ id: parseInt(coach.id) })} disableWhileProcessing>
-                      {({ processing }) => (
+                  <Form {...CoachesController.resendInvitation.form({ id: parseInt(coach.id) })} disableWhileProcessing>
+                    {({ processing }) => (
+                      <DropdownMenuItem
+                        onSelect={(e) => e.preventDefault()}
+                        asChild
+                      >
                         <button className="flex w-full items-center gap-2" disabled={processing}>
                           {processing ? <LoaderCircle className="size-3 animate-spin" /> : <MailIcon className="size-3" />}
-                          Resend Invitation
+                          {processing ? 'Sending invitation' : 'Resend Invitation'}
                         </button>
-                      )}
-                    </Form>
-                  </DropdownMenuItem>
+                      </DropdownMenuItem>
+                    )}
+                  </Form>
                   <DropdownMenuSeparator />
                 </>
               )}

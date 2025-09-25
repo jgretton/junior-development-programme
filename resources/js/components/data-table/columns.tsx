@@ -191,16 +191,19 @@ export const columns: ColumnDef<Player>[] = [
               <DropdownMenuSeparator />
               {isPending && (
                 <>
-                  <DropdownMenuItem asChild>
-                    <Form {...PlayerController.resendInvitation.form(parseInt(player.id))}>
-                      {({ processing }) => (
+                  <Form {...PlayerController.resendInvitation.form(parseInt(player.id))}>
+                    {({ processing }) => (
+                      <DropdownMenuItem
+                        onSelect={(e) => e.preventDefault()}
+                        asChild
+                      >
                         <button className="flex w-full items-center gap-2" disabled={processing}>
                           {processing ? <LoaderCircle className="size-3 animate-spin" /> : <MailIcon className="size-3" />}
-                          Resend Invitation
+                          {processing ? 'Sending invitation' : 'Resend Invitation'}
                         </button>
-                      )}
-                    </Form>
-                  </DropdownMenuItem>
+                      </DropdownMenuItem>
+                    )}
+                  </Form>
                   <DropdownMenuSeparator />
                 </>
               )}

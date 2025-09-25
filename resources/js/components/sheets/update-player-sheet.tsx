@@ -2,7 +2,7 @@ import PlayerController from '@/actions/App/Http/Controllers/Admin/PlayerControl
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Player } from '@/types';
-import { Form } from '@inertiajs/react';
+import { Form, router } from '@inertiajs/react';
 import { LoaderCircle, Plus, Trash2 } from 'lucide-react';
 import React from 'react';
 import InputError from '../input-error';
@@ -20,6 +20,7 @@ export default function UpdatePlayerSheet({ player, open, onOpenChange }: Update
   const [showGuardian, setShowGuardian] = React.useState<boolean>(false);
   const guardianInputRef = React.useRef<HTMLInputElement>(null);
   const [lastValidPlayer, setLastValidPlayer] = React.useState<Player | null>(null);
+  const [isResendingInvitation, setIsResendingInvitation] = React.useState(false);
 
   React.useEffect(() => {
     if (player) {
@@ -77,9 +78,13 @@ export default function UpdatePlayerSheet({ player, open, onOpenChange }: Update
           <SheetTitle>Edit Player Details</SheetTitle>
           <SheetDescription>Update player information and settings. Changes will be saved when you click "Save changes".</SheetDescription>
         </SheetHeader>
-        <Form {...PlayerController.update.form({ player: parseInt(displayPlayer.id) })} disableWhileProcessing onSuccess={() => onOpenChange(false)}>
+        <Form
+          {...PlayerController.update.form({ player: parseInt(displayPlayer.id) })}
+          disableWhileProcessing
+          onSuccess={() => onOpenChange(false)}
+          className="flex-1">
           {({ processing, errors }) => (
-            <>
+            <div className="flex size-full flex-col justify-between">
               <div className="grid flex-1 auto-rows-min gap-6 px-4">
                 <div className="grid gap-3">
                   <Label htmlFor="name">Name</Label>
@@ -102,8 +107,23 @@ export default function UpdatePlayerSheet({ player, open, onOpenChange }: Update
                         </div>
                       </div>
                       <p className="text-xs text-gray-600">Status cannot be changed until player completes registration.</p>
-                      <Button variant="outline" className="w-full" type="button">
-                        Resend Invitation Link
+                      <Button
+                        variant="outline"
+                        className="w-full"
+                        type="button"
+                        disabled={isResendingInvitation}
+                        onClick={() => {
+                          setIsResendingInvitation(true);
+                          router.post(
+                            PlayerController.resendInvitation.url(parseInt(displayPlayer.id)),
+                            {},
+                            {
+                              onFinish: () => setIsResendingInvitation(false),
+                            }
+                          );
+                        }}>
+                        {isResendingInvitation ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : null}
+                        {isResendingInvitation ? 'Sending invitation' : 'Resend Invitation Link'}
                       </Button>
                       {/* Hidden input to prevent client-side validation error */}
                       <input type="hidden" name="status" value="pending" />
@@ -173,7 +193,7 @@ export default function UpdatePlayerSheet({ player, open, onOpenChange }: Update
                   </Button>
                 </SheetClose>
               </SheetFooter>
-            </>
+            </div>
           )}
         </Form>
       </SheetContent>
