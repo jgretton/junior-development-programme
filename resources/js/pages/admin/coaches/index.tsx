@@ -19,7 +19,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 interface PageProps {
   coaches: Player[];
   error: string;
-  flash: { error: string; success: string };
+  flash: { error: string; success: string; warning: string };
 }
 
 export default function Index({ coaches, error, flash }: PageProps) {
@@ -28,6 +28,7 @@ export default function Index({ coaches, error, flash }: PageProps) {
   React.useEffect(() => {
     if (flash.success) toast.success(flash.success);
     if (flash.error) toast.error(flash.error);
+    if (flash.warning) toast.warning(flash.warning);
   }, [flash]);
   return (
     <AppLayout breadcrumbs={breadcrumbs}>

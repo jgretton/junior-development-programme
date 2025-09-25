@@ -2,7 +2,21 @@ import { Player } from '@/types';
 import { ColumnDef } from '@tanstack/react-table';
 import { Badge } from '../../ui/badge';
 
-import { Archive, ArrowUpDown, CheckCircle, Clock, CopyIcon, Edit2Icon, MoreHorizontal, Pause, Trash2Icon } from 'lucide-react';
+import CoachesController from '@/actions/App/Http/Controllers/Admin/CoachesController';
+import { Form } from '@inertiajs/react';
+import {
+  Archive,
+  ArrowUpDown,
+  CheckCircle,
+  Clock,
+  CopyIcon,
+  Edit2Icon,
+  LoaderCircle,
+  MailIcon,
+  MoreHorizontal,
+  Pause,
+  Trash2Icon,
+} from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -174,31 +188,51 @@ export const coaches_columns: ColumnDef<Player>[] = [
     id: 'actions',
     cell: ({ row, table }) => {
       const meta = table.options.meta as { editPlayer?: (player: Player) => void; deletePlayer?: (player: Player) => void };
+      const coach = row.original;
+      const isPending = coach.status?.toLowerCase() === 'pending';
+
       return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => navigator.clipboard.writeText(row.getValue('email'))}>
-              <CopyIcon className="size-3 text-gray-500" />
-              Copy User Email
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={() => meta?.editPlayer?.(row.original)}>
-              <Edit2Icon className="size-3 text-gray-500" />
-              Edit User
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => meta?.deletePlayer?.(row.original)}>
-              <Trash2Icon className="size-3 text-red-500" />
-              Delete User
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="flex items-center gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <span className="sr-only">Open menu</span>
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+              <DropdownMenuItem onClick={() => navigator.clipboard.writeText(row.getValue('email'))}>
+                <CopyIcon className="size-3 text-gray-500" />
+                Copy User Email
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              {isPending && (
+                <>
+                  <DropdownMenuItem asChild>
+                    <Form {...CoachesController.resendInvitation.form({ id: parseInt(coach.id) })} disableWhileProcessing>
+                      {({ processing }) => (
+                        <button className="flex w-full items-center gap-2" disabled={processing}>
+                          {processing ? <LoaderCircle className="size-3 animate-spin" /> : <MailIcon className="size-3" />}
+                          Resend Invitation
+                        </button>
+                      )}
+                    </Form>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                </>
+              )}
+              <DropdownMenuItem onSelect={() => meta?.editPlayer?.(row.original)}>
+                <Edit2Icon className="size-3 text-gray-500" />
+                Edit User
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => meta?.deletePlayer?.(row.original)}>
+                <Trash2Icon className="size-3 text-red-500" />
+                Delete User
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       );
     },
   },

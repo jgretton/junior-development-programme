@@ -21,6 +21,12 @@ Route::prefix('admin')
     ->group(function () {
         Route::resource('players', PlayerController::class);
         Route::resource('coaches', CoachesController::class);
+
+        // Resend invitation routes
+        Route::post('coaches/{coach}/resend-invitation', [CoachesController::class, 'resendInvitation'])
+            ->name('coaches.resend-invitation');
+        Route::post('players/{player}/resend-invitation', [PlayerController::class, 'resendInvitation'])
+            ->name('players.resend-invitation');
     });
 
 Route::get('/emails', function () {

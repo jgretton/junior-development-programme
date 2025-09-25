@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Enums\Role;
 use App\Enums\Status;
 use App\Models\User;
+use App\Services\InvitationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
@@ -78,9 +79,12 @@ class PlayerController extends Controller
                 'signup_token_expires_at' => now()->addDays(30),
             ]);
 
-            // Mail::to($user->email)->send(new PlayerInvitation($user));
-
-            return redirect()->route('players.index')->with('success', 'Player invited successfully!');
+            // Use InvitationService to send invitation
+            if (InvitationService::sendInvitation($user)) {
+                return redirect()->route('players.index')->with('success', 'Player invited successfully!');
+            } else {
+                return redirect()->route('players.index')->with('warning', 'Player created but invitation failed to send. You can resend it from the players list.');
+            }
         } catch (\Exception $e) {
             Log::error('PlayerController@store failed', [
                 'error' => $e->getMessage(),
@@ -149,6 +153,18 @@ class PlayerController extends Controller
     }
 
     /**
+     * Resend invitation email to player.
+     */
+    public function resendInvitation(User $player)
+    {
+        if (InvitationService::resendInvitation($player)) {
+            return redirect()->back()->with('success', "Invitation resent successfully to {$player->name}");
+        } else {
+            return redirect()->back()->with('error', 'Failed to resend invitation. Please try again.');
+        }
+    }
+
+    /**
      * Remove the specified resource from storage.
      */
     public function destroy(User $player)
@@ -158,7 +174,7 @@ class PlayerController extends Controller
             $player->delete();
             return redirect()->back()->with('success', 'Player deleted successfully');
         } catch (\Exception $e) {
-            Log::error('Player deletion failed', ['player_id' => $player->id]);
+            Log::error('Player deletion failed', ['player_id' => $player->id, 'error' => $e->getMessage()]);
             return redirect()->back()->with('error', 'Failed to delete player');
         }
     }

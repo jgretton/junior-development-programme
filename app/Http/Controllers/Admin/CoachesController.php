@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreCoachRequest;
 use App\Http\Requests\UpdateCoachesRequest;
 use App\Models\User;
+use App\Services\InvitationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
@@ -56,9 +57,12 @@ class CoachesController extends Controller
                 'signup_token_expires_at' => now()->addDays(30),
             ]);
 
-            // Mail::to($user->email)->send(new PlayerInvitation($user));
-
-            return redirect()->route('coaches.index')->with('success', 'Coach invited successfully!');
+            // Use InvitationService to send invitation
+            if (InvitationService::sendInvitation($user)) {
+                return redirect()->route('coaches.index')->with('success', 'Coach invited successfully!');
+            } else {
+                return redirect()->route('coaches.index')->with('warning', 'Coach created but invitation failed to send. You can resend it from the coaches list.');
+            }
         } catch (\Exception $e) {
             Log::error('CoachesController@store failed', [
                 'error' => $e->getMessage(),
@@ -123,6 +127,18 @@ class CoachesController extends Controller
                 ->back()
                 ->withErrors(['general' => 'Failed to update coach. Please try again.'])
                 ->withInput();
+        }
+    }
+
+    /**
+     * Resend invitation email to coach.
+     */
+    public function resendInvitation(User $coach)
+    {
+        if (InvitationService::resendInvitation($coach)) {
+            return redirect()->back()->with('success', "Invitation resent successfully to {$coach->name}");
+        } else {
+            return redirect()->back()->with('error', 'Failed to resend invitation. Please try again.');
         }
     }
 
