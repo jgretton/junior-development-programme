@@ -49,5 +49,7 @@ class DatabaseSeeder extends Seeder
         User::factory()
             ->player()
             ->create(['email' => 'playerpending@test.com']);
+
+        $this->call(RankSeeder::class);
     }
 }
