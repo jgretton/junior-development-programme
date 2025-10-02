@@ -19,7 +19,7 @@ class SessionFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => 'Development ' . fake()->date('d-m-y'),
+            'name' => 'Development',
             'date' => fake()->date(),
             'focus_areas' => fake()->sentence(rand(8, 20)),
             'created_by' => User::whereIn('role', [Role::ADMIN])->first()->id,

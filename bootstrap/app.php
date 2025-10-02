@@ -13,6 +13,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
         $middleware->alias([
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
+            'coach.or.admin' => \App\Http\Middleware\CoachOrAdminMiddleware::class,
             'update.lastlogin' => \App\Http\Middleware\TrackLastLogin::class,
             // ... other middleware
         ]);

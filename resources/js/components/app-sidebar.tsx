@@ -6,7 +6,7 @@ import coaches from '@/routes/coaches';
 import players from '@/routes/players';
 import { SharedData, type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { IdCardLanyard, LayoutGrid, Users } from 'lucide-react';
+import { Calendar, IdCardLanyard, LayoutGrid, Users } from 'lucide-react';
 import AppLogo from './app-logo';
 import { Separator } from './ui/separator';
 
@@ -15,6 +15,11 @@ const mainNavItems: NavItem[] = [
     title: 'Dashboard',
     href: dashboard(),
     icon: LayoutGrid,
+  },
+  {
+    title: 'Sessions',
+    href: '/sessions',
+    icon: Calendar,
   },
 ];
 const adminNavItems: NavItem[] = [

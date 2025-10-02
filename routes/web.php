@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\CoachesController;
 use App\Http\Controllers\Admin\PlayerController;
+use App\Http\Controllers\SessionController;
 use App\Mail\PlayerInvitation;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -23,11 +24,22 @@ Route::prefix('admin')
         Route::resource('coaches', CoachesController::class);
 
         // Resend invitation routes
-        Route::post('coaches/{coach}/resend-invitation', [CoachesController::class, 'resendInvitation'])
-            ->name('coaches.resend-invitation');
-        Route::post('players/{player}/resend-invitation', [PlayerController::class, 'resendInvitation'])
-            ->name('players.resend-invitation');
+        Route::post('coaches/{coach}/resend-invitation', [CoachesController::class, 'resendInvitation'])->name('coaches.resend-invitation');
+        Route::post('players/{player}/resend-invitation', [PlayerController::class, 'resendInvitation'])->name('players.resend-invitation');
     });
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('/sessions', [SessionController::class, 'index']);
+    Route::get('/sessions/{session}', [SessionController::class, 'show']); // Everyone
+
+    Route::middleware(['coach.or.admin'])->group(function () {
+        Route::get('/sessions/create', [SessionController::class, 'create']);
+        Route::post('/sessions', [SessionController::class, 'store']);
+        Route::get('/sessions/{session}/edit', [SessionController::class, 'edit']);
+        Route::put('/sessions/{session}', [SessionController::class, 'update']);
+        Route::delete('/sessions/{session}', [SessionController::class, 'destroy']);
+    });
+});
 
 Route::get('/emails', function () {
     // Create a test user object
