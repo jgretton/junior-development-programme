@@ -4,11 +4,12 @@ import { SessionList } from '@/components/sessions/session-list';
 import { Button } from '@/components/ui/button';
 import { useInfiniteScroll } from '@/hooks/use-infinite-scroll';
 import { useSessionFilters } from '@/hooks/use-session-filters';
-import { calculateSessionCounts, groupSessionsByMonth } from '@/lib/session-utils';
 import AppLayout from '@/layouts/app-layout';
+import { calculateSessionCounts, groupSessionsByMonth } from '@/lib/session-utils';
 import { BreadcrumbItem } from '@/types';
 import { FilterType, Session } from '@/types/session';
-import { Head } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
+import { PlusIcon } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -65,10 +66,14 @@ export default function SessionsPage({ sessions }: SessionsPageProps) {
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
       <Head title="Sessions" />
-      <div className="container mx-auto px-4 py-6 sm:py-10">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="container mx-auto mt-10 px-4">
+        <div className="flex flex-col gap-4 sm:flex-row sm:justify-between">
           <Heading title="Sessions" />
-          <Button size="sm">Create Session</Button>
+          <Link href={'/sessions/create'}>
+            <Button>
+              <PlusIcon /> Create Session
+            </Button>
+          </Link>
         </div>
 
         <div className="mt-6">

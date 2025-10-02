@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Category;
+use App\Models\Criteria;
+use App\Models\Rank;
 use App\Models\Session;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -26,7 +29,31 @@ class SessionController extends Controller
      */
     public function create()
     {
-        //
+        $criteriaData = [];
+
+        $categories = Category::with(['criteria' => function ($query) {
+            $query->with('rank')->orderBy('rank_id');
+        }])->get();
+
+        foreach ($categories as $category) {
+            $categoryKey = strtolower($category->name);
+            $criteriaData[$categoryKey] = [];
+
+            foreach ($category->criteria as $criterion) {
+                $rankKey = strtolower($criterion->rank->name);
+                if (!isset($criteriaData[$categoryKey][$rankKey])) {
+                    $criteriaData[$categoryKey][$rankKey] = [];
+                }
+                $criteriaData[$categoryKey][$rankKey][] = [
+                    'id' => $criterion->id,
+                    'name' => $criterion->name,
+                ];
+            }
+        }
+
+        return Inertia::render('sessions/create', [
+            'criteria' => $criteriaData,
+        ]);
     }
 
     /**
@@ -34,7 +61,7 @@ class SessionController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        dd($request->all());
     }
 
     /**

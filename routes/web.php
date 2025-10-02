@@ -30,7 +30,6 @@ Route::prefix('admin')
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/sessions', [SessionController::class, 'index']);
-    Route::get('/sessions/{session}', [SessionController::class, 'show']); // Everyone
 
     Route::middleware(['coach.or.admin'])->group(function () {
         Route::get('/sessions/create', [SessionController::class, 'create']);
@@ -39,6 +38,8 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/sessions/{session}', [SessionController::class, 'update']);
         Route::delete('/sessions/{session}', [SessionController::class, 'destroy']);
     });
+
+    Route::get('/sessions/{session}', [SessionController::class, 'show']); // Everyone
 });
 
 Route::get('/emails', function () {
