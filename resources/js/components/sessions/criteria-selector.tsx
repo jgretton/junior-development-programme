@@ -127,7 +127,7 @@ export function CriteriaSelector({ criteriaData, selectedIds = [], onSelectionCh
       </div>
 
       <Tabs value={activeCategory} onValueChange={setActiveCategory} className="w-full">
-        <TabsList className={`grid w-full grid-cols-${categories.length}`}>
+        <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${categories.length}, minmax(0, 1fr))` }}>
           {categories.map((category) => {
             const count = getCategoryCount(category);
             return (

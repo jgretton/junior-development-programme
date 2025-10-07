@@ -36,37 +36,39 @@ export default function CreatePage({ criteria }: CreatePageProps) {
 
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
-      <Head title="Sessions" />
+      <Head title="Create Session" />
 
-      <div className="container mx-auto mt-10 px-4">
-        <div className="flex flex-col gap-4 sm:flex-row sm:justify-between">
+      <div className="container mx-auto max-w-5xl py-8 px-4">
+        <div className="mb-8">
           <Heading title="Create a Session" />
         </div>
 
-        <div className="mx-auto">
-          <Form {...SessionController.store.form()} resetOnSuccess>
-            {({ processing, errors }) => (
-              <>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="grid gap-3">
+        <Form {...SessionController.store.form()} resetOnSuccess>
+          {({ processing, errors }) => (
+            <div className="space-y-8">
+              <div className="rounded-lg border bg-card p-6">
+                <h2 className="mb-6 text-lg font-semibold">Session Details</h2>
+                <div className="grid gap-6 md:grid-cols-2">
+                  <div className="space-y-2">
                     <Label htmlFor="name">
-                      Name<span className="ml-1 text-destructive">*</span>
+                      Session Name<span className="ml-1 text-destructive">*</span>
                     </Label>
-                    <Input id="name" name="name" type="text" required />
+                    <Input id="name" name="name" type="text" placeholder="e.g., Bronze Skills Training" required />
                     <InputError message={errors.name} />
                   </div>
-                  <div className="flex w-full flex-col gap-3">
-                    <Label htmlFor="date" className="px-1">
-                      Date of session<span className="ml-1 text-destructive">*</span>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="date">
+                      Date<span className="ml-1 text-destructive">*</span>
                     </Label>
                     <Popover open={open} onOpenChange={setOpen}>
                       <PopoverTrigger asChild>
-                        <Button variant="outline" id="date" className="w-full justify-between font-normal">
-                          {date ? date.toLocaleDateString() : 'Select date'}
-                          <ChevronDownIcon />
+                        <Button variant="outline" className="w-full justify-between font-normal text-left">
+                          {date ? date.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' }) : 'Select a date'}
+                          <ChevronDownIcon className="h-4 w-4 opacity-50" />
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-auto overflow-hidden p-0" align="start">
+                      <PopoverContent className="w-auto p-0" align="start">
                         <Calendar
                           mode="single"
                           selected={date}
@@ -79,36 +81,43 @@ export default function CreatePage({ criteria }: CreatePageProps) {
                       </PopoverContent>
                     </Popover>
                   </div>
-                  <div className="col-span-2 grid gap-3">
+
+                  <div className="space-y-2 md:col-span-2">
                     <Label htmlFor="focus_areas">
-                      Focus Areas <span className="ml-1 text-xs text-muted-foreground">(Optional)</span>
+                      Focus Areas <span className="text-xs text-muted-foreground">(Optional)</span>
                     </Label>
-                    <span className="-mt-2 text-sm text-muted-foreground">Outline the focus elements of the session</span>
-                    <Textarea id="focus_areas" name="focus_areas" required />
-                    <InputError message={errors.email} />
+                    <Textarea id="focus_areas" name="focus_areas" placeholder="Describe the key focus areas for this session..." rows={3} />
+                    <InputError message={errors.focus_areas} />
                   </div>
                 </div>
-                <div className="mt-10">
-                  <p>
-                    Criteria Selection <span className="ml-1 text-destructive">*</span>{' '}
-                  </p>
+              </div>
 
-                  <div className="mt-3">
-                    <CriteriaSelector criteriaData={criteria} selectedIds={selectedCriteria} onSelectionChange={setSelectedCriteria} />
-                  </div>
-
-                  {selectedCriteria.map((id) => (
-                    <input key={id} type="hidden" name="criteria[]" value={id} />
-                  ))}
-
-                  <input type="hidden" name="date" value={date?.toISOString().split('T')[0] || ''} />
-
-                  <Button type="submit">Create Session</Button>
+              <div className="rounded-lg border bg-card p-6">
+                <div className="mb-6">
+                  <h2 className="text-lg font-semibold">
+                    Criteria Selection<span className="ml-1 text-destructive">*</span>
+                  </h2>
+                  <p className="mt-1 text-sm text-muted-foreground">Select the criteria that will be assessed in this session</p>
                 </div>
-              </>
-            )}
-          </Form>
-        </div>
+                <CriteriaSelector criteriaData={criteria} selectedIds={selectedCriteria} onSelectionChange={setSelectedCriteria} />
+              </div>
+
+              {selectedCriteria.map((id) => (
+                <input key={id} type="hidden" name="criteria[]" value={id} />
+              ))}
+              <input type="hidden" name="date" value={date?.toISOString().split('T')[0] || ''} />
+
+              <div className="flex justify-end gap-3">
+                <Button type="button" variant="outline" onClick={() => window.history.back()}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={processing || selectedCriteria.length === 0 || !date}>
+                  {processing ? 'Creating...' : 'Create Session'}
+                </Button>
+              </div>
+            </div>
+          )}
+        </Form>
       </div>
     </AppLayout>
   );
