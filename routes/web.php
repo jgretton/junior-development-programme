@@ -29,17 +29,17 @@ Route::prefix('admin')
     });
 
 Route::middleware(['auth'])->group(function () {
-    Route::get('/sessions', [SessionController::class, 'index']);
+    Route::get('/sessions', [SessionController::class, 'index'])->name('sessions.index');
 
     Route::middleware(['coach.or.admin'])->group(function () {
         Route::get('/sessions/create', [SessionController::class, 'create']);
         Route::post('/sessions', [SessionController::class, 'store']);
-        Route::get('/sessions/{session}/edit', [SessionController::class, 'edit']);
-        Route::put('/sessions/{session}', [SessionController::class, 'update']);
-        Route::delete('/sessions/{session}', [SessionController::class, 'destroy']);
+        Route::get('/sessions/{training_session}/edit', [SessionController::class, 'edit']);
+        // Route::put('/sessions/{session}', [SessionController::class, 'update']);
+        // Route::delete('/sessions/{session}', [SessionController::class, 'destroy']);
     });
 
-    Route::get('/sessions/{session}', [SessionController::class, 'show']); // Everyone
+    Route::get('/sessions/{training_session}', [SessionController::class, 'show']); // Everyone
 });
 
 Route::get('/emails', function () {

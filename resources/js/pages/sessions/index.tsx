@@ -74,7 +74,7 @@ export default function SessionsPage({ sessions, flash }: SessionsPageProps) {
 
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
-      <Toaster />
+      <Toaster richColors expand position="top-center" />
       <Head title="Sessions" />
       <div className="container mx-auto mt-10 px-4">
         <div className="flex flex-col gap-4 sm:flex-row sm:justify-between">

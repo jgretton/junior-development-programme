@@ -76,7 +76,7 @@ class SessionController extends Controller
 
             $session->criteria()->attach($request->validated()['criteria']);
 
-            return redirect()->route('sessions/index')->with('success', 'Session created successfully!');
+            return redirect()->route('sessions.index')->with('success', 'Session created successfully!');
         } catch (\Exception $e) {
             Log::error('SessionController@store failed', [
                 'error' => $e->getMessage(),
@@ -94,9 +94,14 @@ class SessionController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Session $session)
+    public function show(Session $training_session)
     {
-        //
+        // Re.nder a single session.
+        $session = Session::with('criteria')->findOrFail($training_session->id);
+
+        return Inertia::render('sessions/[id]/index', [
+            'session' => $session,
+        ]);
     }
 
     /**

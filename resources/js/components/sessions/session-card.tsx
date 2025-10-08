@@ -1,14 +1,9 @@
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import {
-  CATEGORY_NAMES,
-  formatSessionDate,
-  getCriteriaBreakdown,
-  isSessionCompleted,
-  isSessionUpcoming,
-  RANK_NAMES,
-} from '@/lib/session-utils';
+import { CATEGORY_NAMES, formatSessionDate, getCriteriaBreakdown, isSessionCompleted, isSessionUpcoming, RANK_NAMES } from '@/lib/session-utils';
 import { Session } from '@/types/session';
+import { Link } from '@inertiajs/react';
 import { ArrowRight, ChevronDown } from 'lucide-react';
 import { useState } from 'react';
 
@@ -31,40 +26,47 @@ export function SessionCard({ session }: SessionCardProps) {
   };
 
   return (
-    <div className="w-full rounded-lg border border-border bg-card transition-all hover:border-primary/50 hover:shadow-sm">
-      <button className="group w-full p-4 text-left" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0 flex-1 space-y-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="flex items-center gap-1.5">
-                <span className={`h-2 w-2 rounded-full ${getDotColor()}`} />
-                <span className="text-xs font-medium text-muted-foreground">{formattedDate}</span>
-              </div>
+    <div className="w-full rounded-lg border border-border bg-card">
+      <div className="w-full p-4">
+        <div className="space-y-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-1.5">
+              <span className={`h-2 w-2 rounded-full ${getDotColor()}`} />
+              <span className="text-xs font-medium text-muted-foreground">{formattedDate}</span>
             </div>
-
-            <h3 className="truncate font-semibold leading-tight text-foreground">{session.name}</h3>
-
-            {criteriaCount && (
-              <div className="flex flex-wrap gap-1.5">
-                {Object.entries(criteriaCount).map(([rank, count]) => (
-                  <span key={rank} className="text-xs text-muted-foreground">
-                    {rank} ({count})
-                  </span>
-                ))}
-              </div>
-            )}
-
-            {session.focus_areas && <p className="text-sm text-muted-foreground">{session.focus_areas}</p>}
           </div>
 
-          <ArrowRight className="h-4 w-4 flex-shrink-0 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-primary" />
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 flex-1 space-y-2">
+              <h3 className="truncate leading-tight font-semibold text-foreground">{session.name}</h3>
+
+              {criteriaCount && (
+                <div className="flex flex-wrap gap-1.5">
+                  {Object.entries(criteriaCount).map(([rank, count]) => (
+                    <span key={rank} className="text-xs text-muted-foreground">
+                      {rank} ({count})
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {session.focus_areas && <p className="text-sm text-muted-foreground">{session.focus_areas}</p>}
+            </div>
+
+            <Button asChild variant="link" size="sm" className="shrink-0">
+              <Link href={`sessions/${session.id}`}>
+                View
+                <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+              </Link>
+            </Button>
+          </div>
         </div>
-      </button>
+      </div>
 
       {session.criteria && session.criteria.length > 0 && (
         <div className="border-t border-border px-4">
           <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-            <CollapsibleTrigger className="flex w-full items-center justify-between py-3 text-sm font-medium transition-colors hover:text-foreground">
+            <CollapsibleTrigger className="flex w-full cursor-pointer items-center justify-between py-3 text-sm font-medium transition-colors hover:text-foreground">
               <span className="text-muted-foreground">View Criteria Details</span>
               <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${isOpen ? 'rotate-180' : ''}`} />
             </CollapsibleTrigger>
