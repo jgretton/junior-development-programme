@@ -38,12 +38,12 @@ export default function CreatePage({ criteria }: CreatePageProps) {
     <AppLayout breadcrumbs={breadcrumbs}>
       <Head title="Create Session" />
 
-      <div className="container mx-auto max-w-5xl py-8 px-4">
+      <div className="container mx-auto max-w-5xl px-4 py-8">
         <div className="mb-8">
           <Heading title="Create a Session" />
         </div>
 
-        <Form {...SessionController.store.form()} resetOnSuccess>
+        <Form {...SessionController.store.form()}>
           {({ processing, errors }) => (
             <div className="space-y-8">
               <div className="rounded-lg border bg-card p-6">
@@ -63,8 +63,10 @@ export default function CreatePage({ criteria }: CreatePageProps) {
                     </Label>
                     <Popover open={open} onOpenChange={setOpen}>
                       <PopoverTrigger asChild>
-                        <Button variant="outline" className="w-full justify-between font-normal text-left">
-                          {date ? date.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' }) : 'Select a date'}
+                        <Button variant="outline" className="w-full justify-between text-left font-normal">
+                          {date
+                            ? date.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })
+                            : 'Select a date'}
                           <ChevronDownIcon className="h-4 w-4 opacity-50" />
                         </Button>
                       </PopoverTrigger>

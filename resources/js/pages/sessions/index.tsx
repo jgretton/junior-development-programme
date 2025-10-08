@@ -2,6 +2,7 @@ import Heading from '@/components/heading';
 import { SessionFilters } from '@/components/sessions/session-filters';
 import { SessionList } from '@/components/sessions/session-list';
 import { Button } from '@/components/ui/button';
+import { Toaster } from '@/components/ui/sonner';
 import { useInfiniteScroll } from '@/hooks/use-infinite-scroll';
 import { useSessionFilters } from '@/hooks/use-session-filters';
 import AppLayout from '@/layouts/app-layout';
@@ -11,6 +12,7 @@ import { FilterType, Session } from '@/types/session';
 import { Head, Link } from '@inertiajs/react';
 import { PlusIcon } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 
 const breadcrumbs: BreadcrumbItem[] = [
   {
@@ -23,9 +25,10 @@ const ITEMS_PER_PAGE = 15;
 
 interface SessionsPageProps {
   sessions: Session[];
+  flash: { error: string; success: string; warning: string };
 }
 
-export default function SessionsPage({ sessions }: SessionsPageProps) {
+export default function SessionsPage({ sessions, flash }: SessionsPageProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<FilterType>('all');
 
@@ -63,8 +66,15 @@ export default function SessionsPage({ sessions }: SessionsPageProps) {
     resetDisplayCount();
   }, [searchQuery, resetDisplayCount]);
 
+  useEffect(() => {
+    if (flash?.success) toast.success(flash.success);
+    if (flash?.error) toast.error(flash.error);
+    if (flash?.warning) toast.warning(flash.warning);
+  }, [flash]);
+
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
+      <Toaster />
       <Head title="Sessions" />
       <div className="container mx-auto mt-10 px-4">
         <div className="flex flex-col gap-4 sm:flex-row sm:justify-between">

@@ -28,7 +28,7 @@ class StoreSessionRequest extends FormRequest
             'date' => 'required|date',
             'focus_areas' => 'nullable|string|max:1000',
             'criteria' => 'required|array|min:1', // Must be array with at least 1
-            'criteria.*' => 'exists:criteria,id', // Each ID must exist in criteria table
+            'criteria.*' => 'exists:criterias,id', // Each ID must exist in criteria table
         ];
     }
 }

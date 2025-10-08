@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreSessionRequest;
 use App\Models\Category;
 use App\Models\Criteria;
 use App\Models\Rank;
 use App\Models\Session;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Session as FacadesSession;
 use Inertia\Inertia;
 
 class SessionController extends Controller
@@ -31,9 +34,11 @@ class SessionController extends Controller
     {
         $criteriaData = [];
 
-        $categories = Category::with(['criteria' => function ($query) {
-            $query->with('rank')->orderBy('rank_id');
-        }])->get();
+        $categories = Category::with([
+            'criteria' => function ($query) {
+                $query->with('rank')->orderBy('rank_id');
+            },
+        ])->get();
 
         foreach ($categories as $category) {
             $categoryKey = strtolower($category->name);
@@ -59,9 +64,31 @@ class SessionController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreSessionRequest $request)
     {
-        dd($request->all());
+        try {
+            $session = Session::create([
+                'name' => $request->validated()['name'],
+                'date' => $request->validated()['date'],
+                'created_by' => auth()->id(),
+                'focus_areas' => $request->validated()['focus_areas'] ?? null,
+            ]);
+
+            $session->criteria()->attach($request->validated()['criteria']);
+
+            return redirect()->route('sessions/index')->with('success', 'Session created successfully!');
+        } catch (\Exception $e) {
+            Log::error('SessionController@store failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'request_data' => $request->validated(),
+            ]);
+
+            return redirect()
+                ->back()
+                ->withErrors(['general' => 'Failed to create session. Please try again.'])
+                ->withInput();
+        }
     }
 
     /**
