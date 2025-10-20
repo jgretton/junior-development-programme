@@ -1,19 +1,25 @@
 import Heading from '@/components/heading';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import AppLayout from '@/layouts/app-layout';
 import { CATEGORY_NAMES, formatSessionDate, getCriteriaBreakdown, isSessionCompleted, isSessionUpcoming, RANK_NAMES } from '@/lib/session-utils';
 import { BreadcrumbItem } from '@/types';
 import { Session } from '@/types/session';
-import { Head } from '@inertiajs/react';
-import { Calendar, ChevronDown, Target } from 'lucide-react';
+import { Head, Link } from '@inertiajs/react';
+import { Calendar, ChevronDown, ClipboardCheck, Target } from 'lucide-react';
 import { useState } from 'react';
 
 interface SingleSessionPageProps {
   session: Session;
+  players: {
+    id: string;
+    name: string;
+  };
 }
 
-export default function SingleSessionPage({ session }: SingleSessionPageProps) {
+export default function SingleSessionPage({ session, players }: SingleSessionPageProps) {
   const [isCriteriaOpen, setIsCriteriaOpen] = useState(false);
 
   const isUpcoming = isSessionUpcoming(session.date);
@@ -43,83 +49,101 @@ export default function SingleSessionPage({ session }: SingleSessionPageProps) {
     if (isUpcoming) return 'Upcoming';
     return 'Pending';
   };
-
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
       <Head title={session.name} />
 
       <div className="container mx-auto max-w-5xl px-4 py-8">
-        <div className="mb-8">
-          <Heading title={session.name} />
-          <div className="mt-3 flex items-center gap-2">
-            <span className={`h-2 w-2 rounded-full ${getDotColor()}`} />
-            <span className="text-sm text-muted-foreground">{getStatusText()}</span>
+        <div className="mb-8 flex items-start justify-between">
+          <div>
+            <Heading title={session.name} />
+            <div className="mt-3 flex items-center gap-2">
+              <span className={`h-2 w-2 rounded-full ${getDotColor()}`} />
+              <span className="text-sm text-muted-foreground">{getStatusText()}</span>
+            </div>
           </div>
+          <Button asChild>
+            <Link href={`/sessions/${session.id}/assessment`}>
+              <ClipboardCheck className="mr-2 h-4 w-4" />
+              Start Assessment
+            </Link>
+          </Button>
         </div>
 
         <div className="space-y-6">
           {/* Session Overview */}
-          <div className="rounded-lg border bg-card">
-            <div className="p-6">
-              <h2 className="mb-4 text-lg font-semibold">Session Overview</h2>
-              <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <Calendar className="h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm font-medium">Date</p>
-                    <p className="text-sm text-muted-foreground">{formattedDate}</p>
+          <Card>
+            <CardHeader>
+              <CardTitle>Session Overview</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center gap-3">
+                <Calendar className="h-5 w-5 text-muted-foreground" />
+                <div>
+                  <p className="text-sm font-medium">Date</p>
+                  <p className="text-sm text-muted-foreground">{formattedDate}</p>
+                </div>
+              </div>
+
+              {session.focus_areas && (
+                <div className="flex items-start gap-3">
+                  <Target className="mt-0.5 h-5 w-5 text-muted-foreground" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">Focus Areas</p>
+                    <p className="text-sm text-muted-foreground">{session.focus_areas}</p>
                   </div>
                 </div>
+              )}
 
-                {session.focus_areas && (
-                  <div className="flex items-start gap-3">
-                    <Target className="mt-0.5 h-5 w-5 text-muted-foreground" />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">Focus Areas</p>
-                      <p className="text-sm text-muted-foreground">{session.focus_areas}</p>
-                    </div>
+              {criteriaCount && (
+                <div className="pt-2">
+                  <p className="mb-2 text-sm font-medium">Criteria Summary</p>
+                  <div className="flex flex-wrap gap-2">
+                    {Object.entries(criteriaCount).map(([rank, count]) => (
+                      <Badge key={rank} variant="secondary">
+                        {rank}: {count}
+                      </Badge>
+                    ))}
                   </div>
-                )}
-
-                {criteriaCount && (
-                  <div className="pt-2">
-                    <p className="mb-2 text-sm font-medium">Criteria Summary</p>
-                    <div className="flex flex-wrap gap-2">
-                      {Object.entries(criteriaCount).map(([rank, count]) => (
-                        <Badge key={rank} variant="secondary">
-                          {rank}: {count}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
           {/* Criteria Details */}
           {session.criteria && session.criteria.length > 0 && (
-            <div className="rounded-lg border bg-card">
+            <Card>
               <Collapsible open={isCriteriaOpen} onOpenChange={setIsCriteriaOpen}>
-                <CollapsibleTrigger className="flex w-full items-center justify-between p-6 transition-colors hover:bg-muted/50">
-                  <h2 className="text-lg font-semibold">Criteria Details</h2>
-                  <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform ${isCriteriaOpen ? 'rotate-180' : ''}`} />
+                <CollapsibleTrigger className="w-full cursor-pointer transition-colors hover:bg-muted/50">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div className="text-left">
+                        <CardTitle>Criteria Details</CardTitle>
+                        <CardDescription>
+                          View all criteria for this session
+                        </CardDescription>
+                      </div>
+                      <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform ${isCriteriaOpen ? 'rotate-180' : ''}`} />
+                    </div>
+                  </CardHeader>
                 </CollapsibleTrigger>
                 <CollapsibleContent>
-                  <div className="space-y-3 px-6 pb-6">
-                    {session.criteria.map((criterion) => (
-                      <div key={criterion.id} className="rounded-md border border-border bg-muted/30 p-4">
-                        <div className="mb-2 flex flex-wrap items-center gap-2">
-                          <Badge variant="secondary">{RANK_NAMES[criterion.rank_id]}</Badge>
-                          <Badge variant="outline">{CATEGORY_NAMES[criterion.category_id]}</Badge>
+                  <CardContent className="pt-0">
+                    <div className="space-y-3">
+                      {session.criteria.map((criterion) => (
+                        <div key={criterion.id} className="rounded-lg border bg-muted/20 p-4">
+                          <div className="mb-2 flex flex-wrap items-center gap-2">
+                            <Badge variant="secondary">{RANK_NAMES[criterion.rank_id]}</Badge>
+                            <Badge variant="outline">{CATEGORY_NAMES[criterion.category_id]}</Badge>
+                          </div>
+                          <p className="text-sm leading-relaxed text-foreground">{criterion.name}</p>
                         </div>
-                        <p className="text-sm leading-relaxed text-foreground">{criterion.name}</p>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  </CardContent>
                 </CollapsibleContent>
               </Collapsible>
-            </div>
+            </Card>
           )}
         </div>
       </div>

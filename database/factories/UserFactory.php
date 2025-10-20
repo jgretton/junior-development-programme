@@ -54,36 +54,31 @@ class UserFactory extends Factory
     public function admin()
     {
         return $this->state([
-            'email' => 'admin@test.com',
             'role' => Role::ADMIN,
         ]);
     }
     public function coach()
     {
         return $this->state([
-            'email' => 'coach@test.com',
             'role' => Role::JUNIOR_DEVELOPMENT_COACH,
         ]);
     }
     public function observer()
     {
         return $this->state([
-            'email' => 'observer@test.com',
             'role' => Role::OBSERVER,
         ]);
     }
     public function playerWithGuardian()
     {
         return $this->state([
-            'email' => 'playerWithGuardian@test.com',
             'role' => Role::PLAYER,
-            'guardian_email' => 'guardianemail@test.com',
+            'guardian_email' => fake()->safeEmail(),
         ]);
     }
     public function player()
     {
         return $this->state([
-            'email' => 'player@test.com',
             'role' => Role::PLAYER,
         ]);
     }

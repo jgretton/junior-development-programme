@@ -56,6 +56,9 @@ class DatabaseSeeder extends Seeder
             array_merge(User::factory()->player()->raw(), ['email' => 'playerpending@test.com']),
         );
 
+        // Create 50 random players
+        User::factory()->player()->active()->count(50)->create();
+
         $this->call(RankSeeder::class);
         $this->call(CategorySeeder::class);
         $this->call(CriteriaSeeder::class);

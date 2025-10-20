@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\Role;
+use App\Enums\Status;
 use App\Http\Requests\StoreSessionRequest;
 use App\Models\Category;
 use App\Models\Criteria;
 use App\Models\Rank;
 use App\Models\Session;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session as FacadesSession;
@@ -76,7 +79,7 @@ class SessionController extends Controller
 
             $session->criteria()->attach($request->validated()['criteria']);
 
-            return redirect()->route('sessions.index')->with('success', 'Session created successfully!');
+            return redirect()->route('sessions.show', $session)->with('success', 'Session created successfully!');
         } catch (\Exception $e) {
             Log::error('SessionController@store failed', [
                 'error' => $e->getMessage(),
@@ -126,5 +129,24 @@ class SessionController extends Controller
     public function destroy(Session $session)
     {
         //
+    }
+
+    public function assessment(Session $training_session)
+    {
+        // Route model binding automatically returns 404 if session doesn't exist
+        // No need for manual checks
+
+        $players = User::where('role', Role::PLAYER)
+            ->where('status', Status::ACTIVE)
+            ->select(['id', 'name'])
+            ->get();
+
+        $session = Session::with(['criteria:id,name'])->findOrFail($training_session->id);
+
+        // Return new session screen with session criteria and players
+        return Inertia::render('sessions/[id]/assessment/index', [
+            'players' => $players,
+            'session' => $session,
+        ]);
     }
 }
