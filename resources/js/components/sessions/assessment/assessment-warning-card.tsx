@@ -23,14 +23,12 @@ export function AssessmentWarningCard({ title, description, items }: AssessmentW
           <AlertCircle className="h-5 w-5" />
           {title}
         </CardTitle>
-        <CardDescription className="text-orange-700 dark:text-orange-300">
-          {description}
-        </CardDescription>
+        <CardDescription className="text-orange-700 dark:text-orange-300">{description}</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="flex flex-wrap gap-2">
           {items.map((item) => (
-            <Badge key={item.id} variant="outline" className="bg-white dark:bg-orange-900">
+            <Badge key={item.id} variant="outline" className="max-w-full bg-white break-all whitespace-normal dark:bg-orange-900">
               {item.name}
             </Badge>
           ))}
