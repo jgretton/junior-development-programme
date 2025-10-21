@@ -15,11 +15,11 @@ return new class extends Migration {
             $table->timestamps();
 
             $table->foreignId('user_id')->constrained('users');
-            $table->foreignId('criteria_id')->constrained('criteria');
+            $table->foreignId('criteria_id')->constrained('criterias');
             $table->enum('status', ['PENDING', 'COMPLETED'])->default('PENDING');
             $table->foreignId('assessed_by')->constrained('users');
             $table->foreignId('approved_by')->nullable()->constrained('users');
-            $table->foreignId('session_id')->constrained('sessions');
+            $table->foreignId('session_id')->constrained('training_sessions');
             $table->timestamp('assessed_at');
             $table->timestamp('approved_at')->nullable();
 

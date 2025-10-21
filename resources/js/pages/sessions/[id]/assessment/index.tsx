@@ -1,11 +1,11 @@
+import { AssessmentReview } from '@/components/sessions/assessment/assessment-review';
+import { AttendanceSelectionStep } from '@/components/sessions/assessment/attendance-selection-step';
+import { CriteriaAssessmentStep } from '@/components/sessions/assessment/criteria-assessment-step';
 import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem } from '@/types';
 import { Session } from '@/types/session';
-import { Head } from '@inertiajs/react';
-import { useState, useMemo, useCallback } from 'react';
-import { AttendanceSelectionStep } from '@/components/sessions/assessment/attendance-selection-step';
-import { CriteriaAssessmentStep } from '@/components/sessions/assessment/criteria-assessment-step';
-import { AssessmentReview } from '@/components/sessions/assessment/assessment-review';
+import { Head, router } from '@inertiajs/react';
+import { useCallback, useMemo, useState } from 'react';
 
 interface AssessmentPageProps {
   session: Session;
@@ -141,14 +141,23 @@ export default function AssessmentPage({ session, players }: AssessmentPageProps
   const handleBackToAssessment = useCallback(() => {
     setShowReview(false);
   }, []);
-
   const handleSubmit = useCallback(() => {
-    // TODO: Implement submission logic
-    console.log('Submitting assessments:', {
-      sessionId: session.id,
-      attendingPlayers: Array.from(attendingPlayers),
-      assignments,
-    });
+    router.post(
+      `/sessions/${session.id}/assessment`,
+      {
+        sessionId: session.id,
+        attendingPlayers: Array.from(attendingPlayers),
+        assignments: assignments,
+      },
+      {
+        onSuccess: () => {
+          console.log('success');
+        },
+        onError: (errors) => {
+          console.error('Submission failed:', errors);
+        },
+      }
+    );
   }, [session.id, attendingPlayers, assignments]);
 
   // Render steps

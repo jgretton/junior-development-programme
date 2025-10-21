@@ -1,15 +1,17 @@
 import Heading from '@/components/heading';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { CollapsibleCard } from '@/components/ui/collapsible-card';
+import { Toaster } from '@/components/ui/sonner';
 import AppLayout from '@/layouts/app-layout';
 import { CATEGORY_NAMES, formatSessionDate, getCriteriaBreakdown, isSessionCompleted, isSessionUpcoming, RANK_NAMES } from '@/lib/session-utils';
 import { BreadcrumbItem } from '@/types';
 import { Session } from '@/types/session';
 import { Head, Link } from '@inertiajs/react';
-import { Calendar, ChevronDown, ClipboardCheck, Target } from 'lucide-react';
-import { useState } from 'react';
+import { Calendar, ClipboardCheck, Target } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 interface SingleSessionPageProps {
   session: Session;
@@ -17,10 +19,17 @@ interface SingleSessionPageProps {
     id: string;
     name: string;
   };
+  flash: { error: string; success: string; warning: string };
 }
 
-export default function SingleSessionPage({ session, players }: SingleSessionPageProps) {
+export default function SingleSessionPage({ session, players, flash }: SingleSessionPageProps) {
   const [isCriteriaOpen, setIsCriteriaOpen] = useState(false);
+
+  useEffect(() => {
+    if (flash?.success) toast.success(flash.success);
+    if (flash?.error) toast.error(flash.error);
+    if (flash?.warning) toast.warning(flash.warning);
+  }, [flash]);
 
   const isUpcoming = isSessionUpcoming(session.date);
   const isCompleted = isSessionCompleted(session);
@@ -51,6 +60,7 @@ export default function SingleSessionPage({ session, players }: SingleSessionPag
   };
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
+      <Toaster richColors expand position="top-center" />
       <Head title={session.name} />
 
       <div className="container mx-auto max-w-5xl px-4 py-8">
@@ -112,38 +122,23 @@ export default function SingleSessionPage({ session, players }: SingleSessionPag
 
           {/* Criteria Details */}
           {session.criteria && session.criteria.length > 0 && (
-            <Card>
-              <Collapsible open={isCriteriaOpen} onOpenChange={setIsCriteriaOpen}>
-                <CollapsibleTrigger className="w-full cursor-pointer transition-colors hover:bg-muted/50">
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <div className="text-left">
-                        <CardTitle>Criteria Details</CardTitle>
-                        <CardDescription>
-                          View all criteria for this session
-                        </CardDescription>
-                      </div>
-                      <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform ${isCriteriaOpen ? 'rotate-180' : ''}`} />
+            <CollapsibleCard
+              title="Criteria Details"
+              description="View all criteria for this session"
+              open={isCriteriaOpen}
+              onOpenChange={setIsCriteriaOpen}>
+              <div className="space-y-3">
+                {session.criteria.map((criterion) => (
+                  <div key={criterion.id} className="rounded-lg border bg-muted/20 p-4">
+                    <div className="mb-2 flex flex-wrap items-center gap-2">
+                      <Badge variant="secondary">{RANK_NAMES[criterion.rank_id]}</Badge>
+                      <Badge variant="outline">{CATEGORY_NAMES[criterion.category_id]}</Badge>
                     </div>
-                  </CardHeader>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <CardContent className="pt-0">
-                    <div className="space-y-3">
-                      {session.criteria.map((criterion) => (
-                        <div key={criterion.id} className="rounded-lg border bg-muted/20 p-4">
-                          <div className="mb-2 flex flex-wrap items-center gap-2">
-                            <Badge variant="secondary">{RANK_NAMES[criterion.rank_id]}</Badge>
-                            <Badge variant="outline">{CATEGORY_NAMES[criterion.category_id]}</Badge>
-                          </div>
-                          <p className="text-sm leading-relaxed text-foreground">{criterion.name}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </CollapsibleContent>
-              </Collapsible>
-            </Card>
+                    <p className="text-sm leading-relaxed text-foreground">{criterion.name}</p>
+                  </div>
+                ))}
+              </div>
+            </CollapsibleCard>
           )}
         </div>
       </div>

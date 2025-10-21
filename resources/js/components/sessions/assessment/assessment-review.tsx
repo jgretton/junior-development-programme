@@ -1,10 +1,9 @@
 import Heading from '@/components/heading';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { CollapsibleCard } from '@/components/ui/collapsible-card';
 import { SessionCriteria } from '@/types/session';
-import { Check, ChevronDown, ChevronLeft } from 'lucide-react';
+import { Check, ChevronLeft } from 'lucide-react';
 import { AssessmentSummaryCard } from './assessment-summary-card';
 import { AssessmentWarningCard } from './assessment-warning-card';
 
@@ -97,108 +96,78 @@ export function AssessmentReview({
         )}
 
         {/* Player-by-Player Review - Collapsible */}
-        <Card>
-          <Collapsible open={isPlayersOpen} onOpenChange={onTogglePlayersOpen}>
-            <CollapsibleTrigger className="w-full cursor-pointer transition-colors hover:bg-muted/50">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div className="text-left">
-                    <CardTitle>Player Achievements</CardTitle>
-                    <CardDescription>Review what each player has achieved</CardDescription>
-                  </div>
-                  <ChevronDown
-                    className={`h-5 w-5 text-muted-foreground transition-transform ${isPlayersOpen ? 'rotate-180' : ''}`}
-                  />
-                </div>
-              </CardHeader>
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              <CardContent className="pt-0">
-                <div className="space-y-4">
-                  {attendingPlayers.map((player) => {
-                    const achievedCriteria = criteria.filter((c) => assignments[c.id]?.includes(player.id));
+        <CollapsibleCard
+          title="Player Achievements"
+          description="Review what each player has achieved"
+          open={isPlayersOpen}
+          onOpenChange={onTogglePlayersOpen}>
+          <div className="space-y-4">
+            {attendingPlayers.map((player) => {
+              const achievedCriteria = criteria.filter((c) => assignments[c.id]?.includes(player.id));
 
-                    return (
-                      <div key={player.id} className="rounded-lg border bg-muted/20 p-4">
-                        <div className="mb-3 flex items-center justify-between">
-                          <h3 className="font-medium">{player.name}</h3>
-                          <Badge variant={achievedCriteria.length > 0 ? 'default' : 'secondary'}>
-                            {achievedCriteria.length}/{criteria.length} criteria
-                          </Badge>
-                        </div>
-                        {achievedCriteria.length > 0 ? (
-                          <div className="flex flex-wrap gap-2">
-                            {achievedCriteria.map((criterion) => (
-                              <Badge
-                                key={criterion.id}
-                                variant="outline"
-                                className="bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300">
-                                <Check className="mr-1 h-3 w-3" />
-                                {criterion.name}
-                              </Badge>
-                            ))}
-                          </div>
-                        ) : (
-                          <p className="text-sm text-muted-foreground">No criteria achieved</p>
-                        )}
-                      </div>
-                    );
-                  })}
+              return (
+                <div key={player.id} className="rounded-lg border bg-muted/20 p-4">
+                  <div className="mb-3 flex items-center justify-between">
+                    <h3 className="font-medium">{player.name}</h3>
+                    <Badge variant={achievedCriteria.length > 0 ? 'default' : 'secondary'}>
+                      {achievedCriteria.length}/{criteria.length} criteria
+                    </Badge>
+                  </div>
+                  {achievedCriteria.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {achievedCriteria.map((criterion) => (
+                        <Badge
+                          key={criterion.id}
+                          variant="outline"
+                          className="bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300">
+                          <Check className="mr-1 h-3 w-3" />
+                          {criterion.name}
+                        </Badge>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">No criteria achieved</p>
+                  )}
                 </div>
-              </CardContent>
-            </CollapsibleContent>
-          </Collapsible>
-        </Card>
+              );
+            })}
+          </div>
+        </CollapsibleCard>
 
         {/* Criteria-by-Criteria Review - Collapsible */}
-        <Card>
-          <Collapsible open={isCriteriaOpen} onOpenChange={onToggleCriteriaOpen}>
-            <CollapsibleTrigger className="w-full cursor-pointer transition-colors hover:bg-muted/50">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div className="text-left">
-                    <CardTitle>Criteria Breakdown</CardTitle>
-                    <CardDescription>Review which players achieved each criteria</CardDescription>
-                  </div>
-                  <ChevronDown
-                    className={`h-5 w-5 text-muted-foreground transition-transform ${isCriteriaOpen ? 'rotate-180' : ''}`}
-                  />
-                </div>
-              </CardHeader>
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              <CardContent className="pt-0">
-                <div className="space-y-4">
-                  {criteria.map((criterion) => {
-                    const achievedPlayers = attendingPlayers.filter((p) => assignments[criterion.id]?.includes(p.id));
+        <CollapsibleCard
+          title="Criteria Breakdown"
+          description="Review which players achieved each criteria"
+          open={isCriteriaOpen}
+          onOpenChange={onToggleCriteriaOpen}>
+          <div className="space-y-4">
+            {criteria.map((criterion) => {
+              const achievedPlayers = attendingPlayers.filter((p) => assignments[criterion.id]?.includes(p.id));
 
-                    return (
-                      <div key={criterion.id} className="rounded-lg border bg-muted/20 p-4">
-                        <div className="mb-3 flex items-center justify-between">
-                          <h3 className="font-medium">{criterion.name}</h3>
-                          <Badge variant={achievedPlayers.length > 0 ? 'default' : 'secondary'}>
-                            {achievedPlayers.length}/{attendingPlayers.length} players
-                          </Badge>
-                        </div>
-                        {achievedPlayers.length > 0 ? (
-                          <div className="flex flex-wrap gap-2">
-                            {achievedPlayers.map((player) => (
-                              <Badge key={player.id} variant="outline">
-                                {player.name}
-                              </Badge>
-                            ))}
-                          </div>
-                        ) : (
-                          <p className="text-sm text-muted-foreground">No players achieved this criteria</p>
-                        )}
-                      </div>
-                    );
-                  })}
+              return (
+                <div key={criterion.id} className="rounded-lg border bg-muted/20 p-4">
+                  <div className="mb-3 flex items-center justify-between">
+                    <h3 className="font-medium">{criterion.name}</h3>
+                    <Badge variant={achievedPlayers.length > 0 ? 'default' : 'secondary'}>
+                      {achievedPlayers.length}/{attendingPlayers.length} players
+                    </Badge>
+                  </div>
+                  {achievedPlayers.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {achievedPlayers.map((player) => (
+                        <Badge key={player.id} variant="outline">
+                          {player.name}
+                        </Badge>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">No players achieved this criteria</p>
+                  )}
                 </div>
-              </CardContent>
-            </CollapsibleContent>
-          </Collapsible>
-        </Card>
+              );
+            })}
+          </div>
+        </CollapsibleCard>
 
         {/* Action Buttons */}
         <div className="flex justify-end gap-3">

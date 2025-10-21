@@ -4,15 +4,18 @@ namespace App\Http\Controllers;
 
 use App\Enums\Role;
 use App\Enums\Status;
+use App\Http\Requests\StoreAssessmentRequest;
 use App\Http\Requests\StoreSessionRequest;
 use App\Models\Category;
 use App\Models\Criteria;
-use App\Models\Rank;
+use App\Models\PlayerProgress;
 use App\Models\Session;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Session as FacadesSession;
+
 use Inertia\Inertia;
 
 class SessionController extends Controller
@@ -148,5 +151,97 @@ class SessionController extends Controller
             'players' => $players,
             'session' => $session,
         ]);
+    }
+
+    public function storeAssessment(StoreAssessmentRequest $request, Session $training_session)
+    {
+        DB::beginTransaction();
+
+        try {
+            // Insert attendance records
+            $attendance = [];
+            foreach ($request->attendingPlayers as $playerId) {
+                $attendance[] = [
+                    'session_id' => $training_session->id,
+                    'player_id' => $playerId,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            }
+
+            DB::table('session_attendance')->insertOrIgnore($attendance);
+
+            // TODO: Insert player progress records
+            // Loop through $request->assignments
+            // Handle duplicates with try/catch
+            // Set status based on Auth::user()->role
+            /* 
+            {
+    "sessionId": 40,
+    "attendingPlayers": [
+                13,
+                12,
+                4,
+                5
+            ],
+            "assignments": {
+                "35": [
+                    5,
+                    4
+                ],
+                "65": [
+                    13,
+                    12
+                ],
+                "102": [
+                    4,
+                    5,
+                    12,
+                    13
+                ]
+            }
+        }
+
+       
+        progress = player_progress
+        map over assignments with criteriaID
+        map over criteria ids as user_ids
+
+            */
+            $isAdmin = Auth::user()->role === Role::ADMIN;
+            $progress = [];
+            foreach ($request->assignments as $criteriaId => $playersId) {
+                foreach ($playersId as $playerId) {
+                    $progress[] = [
+                        'user_id' => $playerId,
+                        'criteria_id' => $criteriaId,
+                        'status' => $isAdmin ? 'COMPLETED' : 'PENDING',
+                        'session_id' => $training_session->id,
+                        'assessed_by' => Auth::id(),
+                        'approved_by' => $isAdmin ? Auth::id() : null,
+                        'assessed_at' => now(),
+                        'approved_at' => $isAdmin ? now() : null,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ];
+                }
+            }
+
+            PlayerProgress::insertOrIgnore($progress);
+
+            DB::commit();
+
+            return redirect()->route('sessions.show', $training_session)->with('success', 'Assessment submitted successfully!');
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            Log::error('Assessment submission failed', [
+                'error' => $e->getMessage(),
+                'session_id' => $training_session->id,
+                'user_id' => Auth::id(),
+            ]);
+
+            return redirect()->back()->with('error', 'Failed to submit assessment. Please try again.');
+        }
     }
 }
