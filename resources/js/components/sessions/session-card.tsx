@@ -4,7 +4,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { CATEGORY_NAMES, formatSessionDate, getCriteriaBreakdown, isSessionCompleted, isSessionUpcoming, RANK_NAMES } from '@/lib/session-utils';
 import { Session } from '@/types/session';
 import { Link } from '@inertiajs/react';
-import { ArrowRight, ChevronDown } from 'lucide-react';
+import { AlertCircle, ArrowRight, Calendar, CheckCircle, ChevronDown } from 'lucide-react';
 import { useState } from 'react';
 
 interface SessionCardProps {
@@ -25,6 +25,31 @@ export function SessionCard({ session }: SessionCardProps) {
     return 'bg-muted-foreground/50';
   };
 
+  const getStatusBadge = () => {
+    if (isCompleted) {
+      return (
+        <Badge variant="secondary" className="bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400">
+          <CheckCircle className="mr-1 h-3 w-3" />
+          Assessed
+        </Badge>
+      );
+    }
+    if (isUpcoming) {
+      return (
+        <Badge variant="secondary" className="bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-400">
+          <Calendar className="mr-1 h-3 w-3" />
+          Upcoming
+        </Badge>
+      );
+    }
+    return (
+      <Badge variant="secondary" className="bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-400">
+        <AlertCircle className="mr-1 h-3 w-3" />
+        Pending
+      </Badge>
+    );
+  };
+
   return (
     <div className="w-full rounded-lg border border-border bg-card">
       <div className="w-full p-4">
@@ -34,6 +59,7 @@ export function SessionCard({ session }: SessionCardProps) {
               <span className={`h-2 w-2 rounded-full ${getDotColor()}`} />
               <span className="text-xs font-medium text-muted-foreground">{formattedDate}</span>
             </div>
+            {getStatusBadge()}
           </div>
 
           <div className="flex items-start justify-between gap-3">

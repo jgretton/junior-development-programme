@@ -26,4 +26,9 @@ class Session extends Model
     {
         return $this->belongsToMany(Criteria::class, 'criteria_session');
     }
+
+    public function attendees(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'session_attendance', 'session_id', 'player_id');
+    }
 }

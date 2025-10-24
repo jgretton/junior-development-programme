@@ -28,6 +28,17 @@ class SessionController extends Controller
         //
         $sessions = Session::with('criteria')->orderBy('date', 'DESC')->get();
 
+        // Add is_assessed flag to each session
+        $sessions = $sessions->map(function ($session) {
+            $attendanceCount = DB::table('session_attendance')
+                ->where('session_id', $session->id)
+                ->count();
+
+            $session->is_assessed = $attendanceCount > 0;
+
+            return $session;
+        });
+
         return Inertia::render('sessions/index', [
             'sessions' => $sessions,
         ]);
@@ -103,10 +114,46 @@ class SessionController extends Controller
     public function show(Session $training_session)
     {
         // Re.nder a single session.
-        $session = Session::with('criteria')->findOrFail($training_session->id);
+        $session = Session::with(['criteria', 'attendees:id,name'])->findOrFail($training_session->id);
+
+        //find player progress from session
+        $progress = PlayerProgress::with(['criteria', 'user'])
+            ->where('session_id', $training_session->id)
+            ->get();
+
+        // Get attending player IDs for easy comparison
+        $attendance = $session->attendees;
+        $attendingPlayerIds = $attendance->pluck('id');
+
+        // Build criteria progress array
+        $criteriaProgress = $session->criteria->map(function ($criteria) use ($progress, $attendance, $attendingPlayerIds) {
+            // Get progress records for this specific criteria
+            $criteriaProgressRecords = $progress->where('criteria_id', $criteria->id);
+
+            // Get IDs of players who achieved this criteria
+            $achievedPlayerIds = $criteriaProgressRecords->pluck('user_id');
+
+            // Find IDs of players who didn't achieve it (attended but not in achieved list)
+            $notAchievedPlayerIds = $attendingPlayerIds->diff($achievedPlayerIds);
+
+            // Get the actual User models
+            $achievedPlayers = $attendance->whereIn('id', $achievedPlayerIds)->values();
+            $notAchievedPlayers = $attendance->whereIn('id', $notAchievedPlayerIds)->values();
+
+            return [
+                'criteria' => [
+                    'id' => $criteria->id,
+                    'name' => $criteria->name,
+                ],
+                'achieved' => $achievedPlayers,
+                'notAchieved' => $notAchievedPlayers,
+            ];
+        });
 
         return Inertia::render('sessions/[id]/index', [
             'session' => $session,
+            'attendance' => $attendance,
+            'criteriaProgress' => $criteriaProgress,
         ]);
     }
 
@@ -171,43 +218,6 @@ class SessionController extends Controller
 
             DB::table('session_attendance')->insertOrIgnore($attendance);
 
-            // TODO: Insert player progress records
-            // Loop through $request->assignments
-            // Handle duplicates with try/catch
-            // Set status based on Auth::user()->role
-            /* 
-            {
-    "sessionId": 40,
-    "attendingPlayers": [
-                13,
-                12,
-                4,
-                5
-            ],
-            "assignments": {
-                "35": [
-                    5,
-                    4
-                ],
-                "65": [
-                    13,
-                    12
-                ],
-                "102": [
-                    4,
-                    5,
-                    12,
-                    13
-                ]
-            }
-        }
-
-       
-        progress = player_progress
-        map over assignments with criteriaID
-        map over criteria ids as user_ids
-
-            */
             $isAdmin = Auth::user()->role === Role::ADMIN;
             $progress = [];
             foreach ($request->assignments as $criteriaId => $playersId) {

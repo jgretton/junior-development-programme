@@ -11,6 +11,7 @@ export interface Session {
     date: string;
     focus_areas?: string;
     criteria?: SessionCriteria[];
+    is_assessed?: boolean;
 }
 
 export type FilterType = 'all' | 'upcoming' | 'pending' | 'completed';
@@ -45,4 +46,18 @@ export type CriteriaData = {
 
 export interface CreatePageProps {
     criteria: CriteriaData;
+}
+
+export interface Player {
+    id: number;
+    name: string;
+}
+
+export interface CriteriaProgress {
+    criteria: {
+        id: number;
+        name: string;
+    };
+    achieved: Player[];
+    notAchieved: Player[];
 }

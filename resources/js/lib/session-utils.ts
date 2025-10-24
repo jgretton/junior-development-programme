@@ -22,8 +22,7 @@ export function isSessionUpcoming(date: string | Date): boolean {
 }
 
 export function isSessionCompleted(session: Session): boolean {
-  // TODO: Replace with actual backend data when progress tracking is implemented
-  return false;
+  return session.is_assessed === true;
 }
 
 export function formatSessionDate(date: string | Date): string {
