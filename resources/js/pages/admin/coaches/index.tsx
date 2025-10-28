@@ -33,7 +33,7 @@ export default function Index({ coaches, error, flash }: PageProps) {
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
       <Head title="Coaches" />
-      <div className="container mx-auto mt-10 px-4">
+      <div className="container mx-auto max-w-7xl mt-10 px-4">
         <div className="flex flex-row justify-between">
           <Heading title="Coaches" />
           <div className="flex">

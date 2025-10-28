@@ -62,7 +62,7 @@ export function AssessmentReview({
   const [openCriteria, setOpenCriteria] = useState<{ [key: number]: boolean }>({});
 
   return (
-    <div className="container mx-auto max-w-[1400px] px-4 py-8">
+    <div className="container mx-auto max-w-7xl px-4 py-8">
       {/* Header */}
       <div className="mb-8 flex items-center justify-between">
         <div>

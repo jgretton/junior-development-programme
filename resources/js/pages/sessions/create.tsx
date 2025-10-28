@@ -38,7 +38,7 @@ export default function CreatePage({ criteria }: CreatePageProps) {
     <AppLayout breadcrumbs={breadcrumbs}>
       <Head title="Create Session" />
 
-      <div className="container mx-auto max-w-5xl px-4 py-8">
+      <div className="container mx-auto max-w-7xl px-4 py-8">
         <div className="mb-8">
           <Heading title="Create a Session" />
         </div>

@@ -78,7 +78,7 @@ export default function Index({ error, players, flash }: PageProps) {
           </div>
         </div>
       ) : (
-        <div className="container mx-auto mt-10 px-4">
+        <div className="container mx-auto max-w-7xl mt-10 px-4">
           <div className="flex flex-row justify-between">
             <Heading title="Players" />
             <div className="flex">

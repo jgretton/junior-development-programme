@@ -123,7 +123,7 @@ export default function SessionsPage({ sessions, flash }: SessionsPageProps) {
     <AppLayout breadcrumbs={breadcrumbs}>
       <Toaster richColors expand position="top-center" />
       <Head title="Sessions" />
-      <div className="container mx-auto mt-10 px-4">
+      <div className="container mx-auto max-w-7xl mt-10 px-4">
         <div className="flex flex-col gap-4 sm:flex-row sm:justify-between">
           <Heading title="Sessions" />
           <Link href={'/sessions/create'}>

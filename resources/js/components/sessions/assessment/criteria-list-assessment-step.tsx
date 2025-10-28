@@ -127,7 +127,7 @@ export function CriteriaListAssessmentStep({
   const completedCount = Object.keys(assignments).filter((criteriaId) => assignments[criteriaId].length > 0).length;
 
   return (
-    <div className="container mx-auto max-w-[1600px] px-4 py-8">
+    <div className="container mx-auto max-w-7xl px-4 py-8">
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center justify-between">

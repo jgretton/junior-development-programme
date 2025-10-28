@@ -71,7 +71,7 @@ export default function SingleSessionPage({ session, attendance, flash, criteria
       <Toaster richColors expand position="top-center" />
       <Head title={session.name} />
 
-      <div className="container mx-auto max-w-[1400px] px-4 py-8">
+      <div className="container mx-auto max-w-7xl px-4 py-8">
         <div className="mb-8 flex items-start justify-between">
           <div>
             <Heading title={session.name} />
