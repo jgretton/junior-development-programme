@@ -30,6 +30,8 @@ class StoreAssessmentRequest extends FormRequest
             'assignments' => 'required|array',
             'assignments.*' => 'array',
             'assignments.*.*' => 'integer|exists:users,id',
+            'additionalCriteriaIds' => 'nullable|array',
+            'additionalCriteriaIds.*' => 'integer|exists:criterias,id',
         ];
     }
 }

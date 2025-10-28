@@ -13,14 +13,20 @@ import { Calendar, Check, ClipboardCheck, Edit, Target, Users, X } from 'lucide-
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
+interface AdditionalProgress {
+  criteria: { id: number; name: string };
+  achieved: Player[];
+}
+
 interface SingleSessionPageProps {
   session: Session;
   attendance?: Player[];
   criteriaProgress?: CriteriaProgress[];
+  additionalProgress?: AdditionalProgress[];
   flash: { error: string; success: string; warning: string };
 }
 
-export default function SingleSessionPage({ session, attendance, flash, criteriaProgress }: SingleSessionPageProps) {
+export default function SingleSessionPage({ session, attendance, flash, criteriaProgress, additionalProgress }: SingleSessionPageProps) {
   const [isCriteriaOpen, setIsCriteriaOpen] = useState(false);
   const [highPerformersOpen, setHighPerformersOpen] = useState(false);
   const [goodProgressOpen, setGoodProgressOpen] = useState(false);
@@ -65,7 +71,7 @@ export default function SingleSessionPage({ session, attendance, flash, criteria
       <Toaster richColors expand position="top-center" />
       <Head title={session.name} />
 
-      <div className="container mx-auto max-w-5xl px-4 py-8">
+      <div className="container mx-auto max-w-[1400px] px-4 py-8">
         <div className="mb-8 flex items-start justify-between">
           <div>
             <Heading title={session.name} />
@@ -373,6 +379,48 @@ export default function SingleSessionPage({ session, attendance, flash, criteria
                     ))}
                   </CardContent>
                 </Card>
+
+                {/* Additional Achievements */}
+                {additionalProgress && additionalProgress.length > 0 && (
+                  <Card className="border-purple-200 dark:border-purple-800">
+                    <CardHeader>
+                      <div className="flex items-center gap-2">
+                        <CardTitle className="flex items-center gap-2 text-purple-700 dark:text-purple-300">
+                          <Target className="h-5 w-5" />
+                          Additional Achievements
+                        </CardTitle>
+                        <Badge variant="outline" className="border-purple-300 text-purple-600 dark:border-purple-700 dark:text-purple-400">
+                          Non-Focus
+                        </Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {additionalProgress.map((progress) => {
+                        const achievedCount = progress.achieved.length;
+
+                        return (
+                          <div key={progress.criteria.id} className="rounded-lg border border-dashed border-purple-200 bg-purple-50/50 p-4 dark:border-purple-800 dark:bg-purple-950/20">
+                            <div className="mb-3 flex items-start justify-between">
+                              <h4 className="font-medium">{progress.criteria.name}</h4>
+                              <Badge variant="default" className="bg-purple-600 dark:bg-purple-700">
+                                {achievedCount} player{achievedCount !== 1 ? 's' : ''}
+                              </Badge>
+                            </div>
+                            {progress.achieved.length > 0 && (
+                              <div className="flex flex-wrap gap-2">
+                                {progress.achieved.map((player) => (
+                                  <Badge key={player.id} variant="outline" className="border-purple-300 text-purple-700 dark:border-purple-700 dark:text-purple-300">
+                                    {player.name}
+                                  </Badge>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </CardContent>
+                  </Card>
+                )}
 
                 {/* Detailed Breakdown - Collapsible */}
                 <CollapsibleCard

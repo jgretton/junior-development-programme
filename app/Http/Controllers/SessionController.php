@@ -113,7 +113,7 @@ class SessionController extends Controller
      */
     public function show(Session $training_session)
     {
-        // Re.nder a single session.
+        // Render a single session.
         $session = Session::with(['criteria', 'attendees:id,name'])->findOrFail($training_session->id);
 
         //find player progress from session
@@ -125,10 +125,10 @@ class SessionController extends Controller
         $attendance = $session->attendees;
         $attendingPlayerIds = $attendance->pluck('id');
 
-        // Build criteria progress array
+        // Build criteria progress array for session focus criteria
         $criteriaProgress = $session->criteria->map(function ($criteria) use ($progress, $attendance, $attendingPlayerIds) {
-            // Get progress records for this specific criteria
-            $criteriaProgressRecords = $progress->where('criteria_id', $criteria->id);
+            // Get progress records for this specific criteria (only non-focus)
+            $criteriaProgressRecords = $progress->where('criteria_id', $criteria->id)->where('non_focus_criteria', false);
 
             // Get IDs of players who achieved this criteria
             $achievedPlayerIds = $criteriaProgressRecords->pluck('user_id');
@@ -150,10 +150,28 @@ class SessionController extends Controller
             ];
         });
 
+        // Build additional criteria progress array (non-focus)
+        $additionalProgress = $progress->where('non_focus_criteria', true)->groupBy('criteria_id')->map(function ($records) use ($attendance) {
+            $criteria = $records->first()->criteria;
+            $achievedPlayerIds = $records->pluck('user_id');
+
+            // For additional criteria, we don't track "not achieved" since they weren't planned
+            $achievedPlayers = $attendance->whereIn('id', $achievedPlayerIds)->values();
+
+            return [
+                'criteria' => [
+                    'id' => $criteria->id,
+                    'name' => $criteria->name,
+                ],
+                'achieved' => $achievedPlayers,
+            ];
+        })->values();
+
         return Inertia::render('sessions/[id]/index', [
             'session' => $session,
             'attendance' => $attendance,
             'criteriaProgress' => $criteriaProgress,
+            'additionalProgress' => $additionalProgress,
         ]);
     }
 
@@ -191,12 +209,42 @@ class SessionController extends Controller
             ->select(['id', 'name'])
             ->get();
 
-        $session = Session::with(['criteria:id,name'])->findOrFail($training_session->id);
+        $session = Session::with([
+            'criteria' => function ($query) {
+                $query->with(['category:id,name', 'rank:id,name'])
+                    ->select(['criterias.id', 'criterias.name', 'criterias.category_id', 'criterias.rank_id']);
+            },
+        ])->findOrFail($training_session->id);
+
+        // Get all criteria data for additional criteria selection
+        $criteriaData = [];
+        $categories = Category::with([
+            'criteria' => function ($query) {
+                $query->with('rank')->orderBy('rank_id');
+            },
+        ])->get();
+
+        foreach ($categories as $category) {
+            $categoryKey = strtolower($category->name);
+            $criteriaData[$categoryKey] = [];
+
+            foreach ($category->criteria as $criterion) {
+                $rankKey = strtolower($criterion->rank->name);
+                if (!isset($criteriaData[$categoryKey][$rankKey])) {
+                    $criteriaData[$categoryKey][$rankKey] = [];
+                }
+                $criteriaData[$categoryKey][$rankKey][] = [
+                    'id' => $criterion->id,
+                    'name' => $criterion->name,
+                ];
+            }
+        }
 
         // Return new session screen with session criteria and players
         return Inertia::render('sessions/[id]/assessment/index', [
             'players' => $players,
             'session' => $session,
+            'criteriaData' => $criteriaData,
         ]);
     }
 
@@ -219,8 +267,13 @@ class SessionController extends Controller
             DB::table('session_attendance')->insertOrIgnore($attendance);
 
             $isAdmin = Auth::user()->role === Role::ADMIN;
+            $additionalCriteriaIds = $request->additionalCriteriaIds ?? [];
             $progress = [];
+
             foreach ($request->assignments as $criteriaId => $playersId) {
+                // Check if this criteria is additional (non-focus)
+                $isNonFocus = in_array((int) $criteriaId, $additionalCriteriaIds);
+
                 foreach ($playersId as $playerId) {
                     $progress[] = [
                         'user_id' => $playerId,
@@ -231,6 +284,7 @@ class SessionController extends Controller
                         'approved_by' => $isAdmin ? Auth::id() : null,
                         'assessed_at' => now(),
                         'approved_at' => $isAdmin ? now() : null,
+                        'non_focus_criteria' => $isNonFocus,
                         'created_at' => now(),
                         'updated_at' => now(),
                     ];

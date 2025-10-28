@@ -1,9 +1,10 @@
+import { AdditionalCriteriaModal } from '@/components/sessions/assessment/additional-criteria-modal';
 import { AssessmentReview } from '@/components/sessions/assessment/assessment-review';
 import { AttendanceSelectionStep } from '@/components/sessions/assessment/attendance-selection-step';
-import { CriteriaAssessmentStep } from '@/components/sessions/assessment/criteria-assessment-step';
+import { CriteriaListAssessmentStep } from '@/components/sessions/assessment/criteria-list-assessment-step';
 import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem } from '@/types';
-import { Session } from '@/types/session';
+import { CriteriaData, Session } from '@/types/session';
 import { Head, router } from '@inertiajs/react';
 import { useCallback, useMemo, useState } from 'react';
 
@@ -13,25 +14,65 @@ interface AssessmentPageProps {
     id: string;
     name: string;
   }[];
+  criteriaData: CriteriaData;
 }
 
 interface PlayerAssignment {
   [criteriaId: string]: string[];
 }
 
-export default function AssessmentPage({ session, players }: AssessmentPageProps) {
+export default function AssessmentPage({ session, players, criteriaData }: AssessmentPageProps) {
   // State
   const [attendingPlayers, setAttendingPlayers] = useState<Set<string>>(new Set());
-  const [currentCriteriaIndex, setCurrentCriteriaIndex] = useState(0);
+  const [selectedCriteriaId, setSelectedCriteriaId] = useState<number | null>(null);
   const [assignments, setAssignments] = useState<PlayerAssignment>({});
   const [showReview, setShowReview] = useState(false);
   const [attendanceConfirmed, setAttendanceConfirmed] = useState(false);
   const [isPlayersOpen, setIsPlayersOpen] = useState(false);
   const [isCriteriaOpen, setIsCriteriaOpen] = useState(false);
+  const [showAdditionalCriteriaModal, setShowAdditionalCriteriaModal] = useState(false);
+  const [additionalCriteriaIds, setAdditionalCriteriaIds] = useState<number[]>([]);
 
   // Computed values
   const criteria = session.criteria || [];
-  const currentCriteria = criteria[currentCriteriaIndex];
+
+  // Convert additional criteria IDs to full criteria objects with category and rank info
+  const additionalCriteria = useMemo(() => {
+    const criteriaObjects: Array<{
+      id: number;
+      name: string;
+      category?: { id: number; name: string };
+      rank?: { id: number; name: string };
+    }> = [];
+    additionalCriteriaIds.forEach((id) => {
+      // Search through all categories and ranks to find the criteria
+      Object.entries(criteriaData).forEach(([categoryName, categoryData]) => {
+        Object.entries(categoryData).forEach(([rankName, rankCriteria]) => {
+          const found = rankCriteria.find((c) => c.id === id);
+          if (found) {
+            criteriaObjects.push({
+              ...found,
+              category: { id: 0, name: categoryName },
+              rank: { id: 0, name: rankName },
+            });
+          }
+        });
+      });
+    });
+    return criteriaObjects;
+  }, [additionalCriteriaIds, criteriaData]);
+
+  // Combined list: both session and additional criteria
+  const allCriteria = useMemo(() => {
+    return [...criteria, ...additionalCriteria];
+  }, [criteria, additionalCriteria]);
+
+  // Compute disabled criteria IDs (session criteria + already added additional criteria)
+  const disabledCriteriaIds = useMemo(() => {
+    return [...criteria.map((c) => c.id), ...additionalCriteriaIds];
+  }, [criteria, additionalCriteriaIds]);
+
+  const selectedCriteria = allCriteria.find((c) => c.id === selectedCriteriaId);
 
   const attendingPlayersList = useMemo(() => {
     return players.filter((p) => attendingPlayers.has(p.id));
@@ -65,52 +106,42 @@ export default function AssessmentPage({ session, players }: AssessmentPageProps
     });
   }, []);
 
+  const handleSelectCriteria = useCallback((criteriaId: number) => {
+    setSelectedCriteriaId(criteriaId);
+  }, []);
+
   const togglePlayerAssignment = useCallback(
     (playerId: string) => {
-      if (!currentCriteria) return;
+      if (!selectedCriteria) return;
 
       setAssignments((prev) => {
-        const current = prev[currentCriteria.id] || [];
+        const current = prev[selectedCriteria.id] || [];
         const isAssigned = current.includes(playerId);
 
         return {
           ...prev,
-          [currentCriteria.id]: isAssigned ? current.filter((id) => id !== playerId) : [...current, playerId],
+          [selectedCriteria.id]: isAssigned ? current.filter((id) => id !== playerId) : [...current, playerId],
         };
       });
     },
-    [currentCriteria]
+    [selectedCriteria]
   );
 
   const handleSelectAll = useCallback(() => {
-    if (!currentCriteria) return;
+    if (!selectedCriteria) return;
     setAssignments((prev) => ({
       ...prev,
-      [currentCriteria.id]: attendingPlayersList.map((p) => p.id),
+      [selectedCriteria.id]: attendingPlayersList.map((p) => p.id),
     }));
-  }, [currentCriteria, attendingPlayersList]);
+  }, [selectedCriteria, attendingPlayersList]);
 
   const handleClearAll = useCallback(() => {
-    if (!currentCriteria) return;
+    if (!selectedCriteria) return;
     setAssignments((prev) => ({
       ...prev,
-      [currentCriteria.id]: [],
+      [selectedCriteria.id]: [],
     }));
-  }, [currentCriteria]);
-
-  const handleNext = useCallback(() => {
-    if (currentCriteriaIndex < criteria.length - 1) {
-      setCurrentCriteriaIndex((prev) => prev + 1);
-    } else {
-      setShowReview(true);
-    }
-  }, [currentCriteriaIndex, criteria.length]);
-
-  const handlePrevious = useCallback(() => {
-    if (currentCriteriaIndex > 0) {
-      setCurrentCriteriaIndex((prev) => prev - 1);
-    }
-  }, [currentCriteriaIndex]);
+  }, [selectedCriteria]);
 
   const getAssignmentCount = useCallback(
     (playerId: string) => {
@@ -141,6 +172,26 @@ export default function AssessmentPage({ session, players }: AssessmentPageProps
   const handleBackToAssessment = useCallback(() => {
     setShowReview(false);
   }, []);
+
+  const handleAddAdditionalCriteria = useCallback(() => {
+    setShowAdditionalCriteriaModal(true);
+  }, []);
+
+  const handleAddSelectedCriteria = useCallback((criteriaIds: number[]) => {
+    // Add the new criteria IDs to the additional criteria list
+    setAdditionalCriteriaIds((prev) => [...prev, ...criteriaIds]);
+  }, []);
+
+  const handleRemoveAdditionalCriteria = useCallback((criteriaId: number) => {
+    setAdditionalCriteriaIds((prev) => prev.filter((id) => id !== criteriaId));
+    // Also clear any assignments for this criteria
+    setAssignments((prev) => {
+      const updated = { ...prev };
+      delete updated[criteriaId];
+      return updated;
+    });
+  }, []);
+
   const handleSubmit = useCallback(() => {
     router.post(
       `/sessions/${session.id}/assessment`,
@@ -148,6 +199,7 @@ export default function AssessmentPage({ session, players }: AssessmentPageProps
         sessionId: session.id,
         attendingPlayers: Array.from(attendingPlayers),
         assignments: assignments,
+        additionalCriteriaIds: additionalCriteriaIds,
       },
       {
         onSuccess: () => {
@@ -158,7 +210,7 @@ export default function AssessmentPage({ session, players }: AssessmentPageProps
         },
       }
     );
-  }, [session.id, attendingPlayers, assignments]);
+  }, [session.id, attendingPlayers, assignments, additionalCriteriaIds]);
 
   // Render steps
   if (showReview) {
@@ -168,6 +220,7 @@ export default function AssessmentPage({ session, players }: AssessmentPageProps
         <AssessmentReview
           sessionName={session.name}
           criteria={criteria}
+          additionalCriteria={additionalCriteria}
           attendingPlayers={attendingPlayersList}
           assignments={assignments}
           isPlayersOpen={isPlayersOpen}
@@ -199,19 +252,30 @@ export default function AssessmentPage({ session, players }: AssessmentPageProps
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
       <Head title={`${session.name} - Assessment`} />
-      <CriteriaAssessmentStep
+      <CriteriaListAssessmentStep
         criteria={criteria}
-        currentCriteriaIndex={currentCriteriaIndex}
+        additionalCriteria={additionalCriteria}
         attendingPlayers={attendingPlayersList}
         assignments={assignments}
+        selectedCriteriaId={selectedCriteriaId}
+        onSelectCriteria={handleSelectCriteria}
         onTogglePlayerAssignment={togglePlayerAssignment}
         onSelectAll={handleSelectAll}
         onClearAll={handleClearAll}
-        onPrevious={handlePrevious}
-        onNext={handleNext}
         onReview={() => setShowReview(true)}
+        onAddAdditionalCriteria={handleAddAdditionalCriteria}
+        onRemoveAdditionalCriteria={handleRemoveAdditionalCriteria}
         getCriteriaProgress={getCriteriaProgress}
         getPlayerProgress={getPlayerProgress}
+      />
+
+      {/* Additional Criteria Selection Modal */}
+      <AdditionalCriteriaModal
+        open={showAdditionalCriteriaModal}
+        onOpenChange={setShowAdditionalCriteriaModal}
+        criteriaData={criteriaData}
+        disabledCriteriaIds={disabledCriteriaIds}
+        onAdd={handleAddSelectedCriteria}
       />
     </AppLayout>
   );

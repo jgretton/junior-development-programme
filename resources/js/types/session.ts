@@ -3,6 +3,14 @@ export interface SessionCriteria {
     name: string;
     rank_id: number;
     category_id: number;
+    category?: {
+        id: number;
+        name: string;
+    };
+    rank?: {
+        id: number;
+        name: string;
+    };
 }
 
 export interface Session {

@@ -10,10 +10,11 @@ import { useMemo, useState } from 'react';
 interface CriteriaSelectorProps {
   criteriaData: CriteriaData;
   selectedIds?: number[];
+  disabledIds?: number[];
   onSelectionChange?: (ids: number[]) => void;
 }
 
-export function CriteriaSelector({ criteriaData, selectedIds = [], onSelectionChange }: CriteriaSelectorProps) {
+export function CriteriaSelector({ criteriaData, selectedIds = [], disabledIds = [], onSelectionChange }: CriteriaSelectorProps) {
   const [searchQuery, setSearchQuery] = useState('');
 
   const categories = useMemo(() => Object.keys(criteriaData), [criteriaData]);
@@ -50,7 +51,7 @@ export function CriteriaSelector({ criteriaData, selectedIds = [], onSelectionCh
   }, [searchQuery, criteriaData]);
 
   const toggleCriterion = (id: number) => {
-    if (!onSelectionChange) return;
+    if (!onSelectionChange || disabledIds.includes(id)) return;
     if (selectedIds.includes(id)) {
       onSelectionChange(selectedIds.filter((c) => c !== id));
     } else {
@@ -61,7 +62,7 @@ export function CriteriaSelector({ criteriaData, selectedIds = [], onSelectionCh
   const toggleRank = (category: string, rank: string) => {
     if (!onSelectionChange) return;
     const rankCriteria = criteriaData[category]?.[rank as keyof (typeof criteriaData)[typeof category]] || [];
-    const rankIds = rankCriteria.map((c) => c.id);
+    const rankIds = rankCriteria.map((c) => c.id).filter((id) => !disabledIds.includes(id));
     const allSelected = rankIds.every((id) => selectedIds.includes(id));
 
     if (allSelected) {
@@ -179,19 +180,30 @@ export function CriteriaSelector({ criteriaData, selectedIds = [], onSelectionCh
                           </button>
                         )}
                         <div className="space-y-3">
-                          {rankCriteria.map((criterion) => (
-                            <div key={criterion.id} className="flex items-start gap-3 rounded-lg p-3 transition-colors hover:bg-accent/50">
-                              <Checkbox
-                                id={`criterion-${criterion.id}`}
-                                checked={selectedIds.includes(criterion.id)}
-                                onCheckedChange={() => toggleCriterion(criterion.id)}
-                                className="mt-0.5"
-                              />
-                              <label htmlFor={`criterion-${criterion.id}`} className="flex-1 cursor-pointer text-sm leading-relaxed">
-                                {criterion.name}
-                              </label>
-                            </div>
-                          ))}
+                          {rankCriteria.map((criterion) => {
+                            const isDisabled = disabledIds.includes(criterion.id);
+                            return (
+                              <div
+                                key={criterion.id}
+                                className={`flex items-start gap-3 rounded-lg p-3 transition-colors ${
+                                  isDisabled ? 'cursor-not-allowed opacity-50' : 'hover:bg-accent/50'
+                                }`}>
+                                <Checkbox
+                                  id={`criterion-${criterion.id}`}
+                                  checked={selectedIds.includes(criterion.id)}
+                                  onCheckedChange={() => toggleCriterion(criterion.id)}
+                                  disabled={isDisabled}
+                                  className="mt-0.5"
+                                />
+                                <label
+                                  htmlFor={`criterion-${criterion.id}`}
+                                  className={`flex-1 text-sm leading-relaxed ${isDisabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
+                                  {criterion.name}
+                                  {isDisabled && <span className="ml-2 text-xs text-muted-foreground">(Already selected)</span>}
+                                </label>
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                     </AccordionContent>
