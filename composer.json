@@ -9,7 +9,7 @@
     ],
     "license": "MIT",
     "require": {
-        "php": "^8.2",
+        "php": "^8.2|^8.3",
         "cesargb/laravel-magiclink": "^2.24",
         "inertiajs/inertia-laravel": "^2.0",
         "laravel/framework": "^12.0",
