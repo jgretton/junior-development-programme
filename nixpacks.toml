@@ -1,6 +1,11 @@
+[phases.setup]
+nixPkgs = ["php83"]
+
+[phases.install]
+cmds = ["composer install --no-dev --optimize-autoloader --no-interaction"]
+
 [phases.build]
 cmds = [
-  "composer install --no-dev --optimize-autoloader --no-interaction --no-scripts",
   "php artisan key:generate --force",
   "php artisan migrate --force"
 ]
