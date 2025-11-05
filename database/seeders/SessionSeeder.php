@@ -38,7 +38,8 @@ class SessionSeeder extends Seeder
                 }
 
                 // Random day in the month
-                $day = rand(1, cal_days_in_month(CAL_GREGORIAN, $monthData['month'], $monthData['year']));
+                $daysInMonth = \Carbon\Carbon::create($monthData['year'], $monthData['month'], 1)->daysInMonth;
+                $day = rand(1, $daysInMonth);
                 $date = sprintf('%d-%02d-%02d', $monthData['year'], $monthData['month'], $day);
 
                 $sessions[] = $date;
