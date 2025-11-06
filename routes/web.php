@@ -2,14 +2,19 @@
 
 use App\Http\Controllers\Admin\CoachesController;
 use App\Http\Controllers\Admin\PlayerController;
+use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\SessionController;
 use App\Mail\PlayerInvitation;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-Route::get('/', function () {
-    return Inertia::render('welcome');
-})->name('home');
+Route::middleware('guest')->group(function () {
+    Route::get('/', [AuthenticatedSessionController::class, 'create'])->name('home');
+    Route::post('/', [AuthenticatedSessionController::class, 'store'])->name('login.store');
+});
+
+// Alias for 'login' route name (used by Laravel auth middleware)
+Route::redirect('/login-redirect', '/', 301)->name('login');
 
 Route::middleware(['auth', 'verified', 'update.lastlogin'])->group(function () {
     Route::get('dashboard', function () {
