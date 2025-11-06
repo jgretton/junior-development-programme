@@ -6,7 +6,7 @@ import coaches from '@/routes/coaches';
 import players from '@/routes/players';
 import { SharedData, type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { Calendar, IdCardLanyard, LayoutGrid, Users } from 'lucide-react';
+import { Calendar, ClipboardCheck, IdCardLanyard, LayoutGrid, Users } from 'lucide-react';
 import AppLogo from './app-logo';
 import { Separator } from './ui/separator';
 
@@ -23,6 +23,11 @@ const mainNavItems: NavItem[] = [
   },
 ];
 const adminNavItems: NavItem[] = [
+  {
+    title: 'Pending Approvals',
+    href: '/admin/pending-approvals',
+    icon: ClipboardCheck,
+  },
   {
     title: 'Players',
     href: players.index(),

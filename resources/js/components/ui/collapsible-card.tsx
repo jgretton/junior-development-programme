@@ -4,7 +4,7 @@ import { ChevronDown } from 'lucide-react';
 import { ReactNode } from 'react';
 
 interface CollapsibleCardProps {
-  title: string;
+  title: ReactNode;
   description?: string;
   children: ReactNode;
   open?: boolean;

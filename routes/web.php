@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\CoachesController;
 use App\Http\Controllers\Admin\PlayerController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\PendingApprovalsController;
 use App\Http\Controllers\SessionController;
 use App\Mail\PlayerInvitation;
 use Illuminate\Support\Facades\Route;
@@ -27,6 +28,7 @@ Route::prefix('admin')
     ->group(function () {
         Route::resource('players', PlayerController::class);
         Route::resource('coaches', CoachesController::class);
+        Route::resource('pending-approvals', PendingApprovalsController::class);
 
         // Resend invitation routes
         Route::post('coaches/{coach}/resend-invitation', [CoachesController::class, 'resendInvitation'])->name('coaches.resend-invitation');
