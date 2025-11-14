@@ -89,6 +89,32 @@ export default function PendingApprovalsIndex({ groupedApprovals, totalPending, 
     if (flash.error) toast.error(flash.error);
   }, [flash]);
 
+  // Get all approval IDs
+  const allApprovalIds = React.useMemo(() => {
+    const ids: number[] = [];
+    groupedApprovals.forEach((sessionGroup) => {
+      sessionGroup.criteriaGroups.forEach((criteriaGroup) => {
+        criteriaGroup.approvals.forEach((approval) => {
+          ids.push(approval.id);
+        });
+      });
+    });
+    return ids;
+  }, [groupedApprovals]);
+
+  // Check if all are selected
+  const allSelected = allApprovalIds.length > 0 && allApprovalIds.every((id) => selectedIds.has(id));
+  const someSelected = allApprovalIds.some((id) => selectedIds.has(id)) && !allSelected;
+
+  // Toggle select all
+  const toggleSelectAll = () => {
+    if (allSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(allApprovalIds));
+    }
+  };
+
   // Toggle individual item selection
   const toggleSelection = (id: number) => {
     const newSet = new Set(selectedIds);
@@ -97,6 +123,22 @@ export default function PendingApprovalsIndex({ groupedApprovals, totalPending, 
     } else {
       newSet.add(id);
     }
+    setSelectedIds(newSet);
+  };
+
+  // Toggle all items in a criteria group
+  const toggleCriteriaGroup = (approvalIds: number[]) => {
+    const newSet = new Set(selectedIds);
+    const allSelected = approvalIds.every((id) => newSet.has(id));
+
+    if (allSelected) {
+      // Deselect all
+      approvalIds.forEach((id) => newSet.delete(id));
+    } else {
+      // Select all
+      approvalIds.forEach((id) => newSet.add(id));
+    }
+
     setSelectedIds(newSet);
   };
 
@@ -160,9 +202,23 @@ export default function PendingApprovalsIndex({ groupedApprovals, totalPending, 
           {/* Header */}
           <div className="flex items-center justify-between">
             <Heading title="Pending Approvals" description="Review and approve or reject player assessments from coaches" />
-            <Badge variant="secondary" className="px-4 py-2 text-lg">
-              {totalPending} pending
-            </Badge>
+            <div className="flex items-center gap-4">
+              {totalPending > 0 && (
+                <div className="flex items-center gap-2 rounded-md border bg-card px-3 py-2">
+                  <Checkbox
+                    checked={allSelected}
+                    onCheckedChange={toggleSelectAll}
+                    className={someSelected ? 'data-[state=checked]:bg-primary/50' : ''}
+                  />
+                  <label className="cursor-pointer text-sm font-medium" onClick={toggleSelectAll}>
+                    Select All
+                  </label>
+                </div>
+              )}
+              <Badge variant="secondary" className="px-4 py-2 text-lg">
+                {totalPending} pending
+              </Badge>
+            </div>
           </div>
 
           {/* Empty state */}
@@ -223,8 +279,11 @@ export default function PendingApprovalsIndex({ groupedApprovals, totalPending, 
                         {/* Criteria groups */}
                         {group.criteriaGroups.map((criteriaGroup) => {
                           const isNonFocus = criteriaGroup.approvals[0]?.non_focus_criteria;
+                          const criteriaApprovalIds = criteriaGroup.approvals.map((a) => a.id);
                           const selectedCount = criteriaGroup.approvals.filter((a) => selectedIds.has(a.id)).length;
                           const hasSelection = selectedCount > 0;
+                          const allCriteriaSelected = criteriaApprovalIds.length > 0 && criteriaApprovalIds.every((id) => selectedIds.has(id));
+                          const someCriteriaSelected = hasSelection && !allCriteriaSelected;
 
                           return (
                             <CollapsibleCard
@@ -248,6 +307,21 @@ export default function PendingApprovalsIndex({ groupedApprovals, totalPending, 
                               description={`${criteriaGroup.criteria.rank.name} • ${criteriaGroup.criteria.category.name} • ${criteriaGroup.count} ${criteriaGroup.count === 1 ? 'player' : 'players'}`}
                               defaultOpen={false}
                               className={isNonFocus ? 'border-purple-200 bg-purple-50/30 dark:border-purple-800 dark:bg-purple-950/10' : ''}>
+                              {/* Select All for this criteria */}
+                              <div className="mb-3 flex items-center gap-2 rounded-md border bg-muted/30 px-3 py-2">
+                                <Checkbox
+                                  checked={allCriteriaSelected}
+                                  onCheckedChange={() => toggleCriteriaGroup(criteriaApprovalIds)}
+                                  className={someCriteriaSelected ? 'data-[state=checked]:bg-primary/50' : ''}
+                                />
+                                <label
+                                  className="cursor-pointer text-xs font-medium"
+                                  onClick={() => toggleCriteriaGroup(criteriaApprovalIds)}
+                                >
+                                  Select All ({criteriaGroup.count})
+                                </label>
+                              </div>
+
                               {/* Player list - simple and clean */}
                               <div className="divide-y rounded-lg border">
                                 {criteriaGroup.approvals.map((approval) => {
