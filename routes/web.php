@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\CoachesController;
 use App\Http\Controllers\Admin\PlayerController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\PendingApprovalsController;
+use App\Http\Controllers\PlayerProgressController;
 use App\Http\Controllers\SessionController;
 use App\Mail\PlayerInvitation;
 use Illuminate\Support\Facades\Route;
@@ -36,8 +37,6 @@ Route::prefix('admin')
     });
 
 Route::middleware(['auth'])->group(function () {
-    Route::get('/sessions', [SessionController::class, 'index'])->name('sessions.index');
-
     Route::middleware(['coach.or.admin'])->group(function () {
         Route::get('/sessions/create', [SessionController::class, 'create']);
         Route::post('/sessions', [SessionController::class, 'store']);
@@ -48,7 +47,10 @@ Route::middleware(['auth'])->group(function () {
         // Route::put('/sessions/{session}', [SessionController::class, 'update']);
         // Route::delete('/sessions/{session}', [SessionController::class, 'destroy']);
     });
-
+    Route::middleware(['observer.or.coach.or.admin'])->group(function () {
+        Route::get('/sessions', [SessionController::class, 'index'])->name('sessions.index');
+        Route::get('/player-progress', [PlayerProgressController::class, 'index'])->name('player-progress.index');
+    });
     Route::get('/sessions/{training_session}', [SessionController::class, 'show'])->name('sessions.show'); // Everyone
 });
 

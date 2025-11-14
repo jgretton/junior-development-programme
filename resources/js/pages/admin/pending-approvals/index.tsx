@@ -100,25 +100,6 @@ export default function PendingApprovalsIndex({ groupedApprovals, totalPending, 
     setSelectedIds(newSet);
   };
 
-  // Select all in a criteria group
-  const selectAllInCriteria = (approvals: Approval[]) => {
-    const newSet = new Set(selectedIds);
-    approvals.forEach((approval) => newSet.add(approval.id));
-    setSelectedIds(newSet);
-  };
-
-  // Deselect all in a criteria group
-  const deselectAllInCriteria = (approvals: Approval[]) => {
-    const newSet = new Set(selectedIds);
-    approvals.forEach((approval) => newSet.delete(approval.id));
-    setSelectedIds(newSet);
-  };
-
-  // Check if all in criteria are selected
-  const areAllSelectedInCriteria = (approvals: Approval[]) => {
-    return approvals.every((approval) => selectedIds.has(approval.id));
-  };
-
   // Handle approve
   const handleApprove = (ids: number[]) => {
     if (ids.length === 0) {
@@ -241,7 +222,6 @@ export default function PendingApprovalsIndex({ groupedApprovals, totalPending, 
                       <div className="space-y-4">
                         {/* Criteria groups */}
                         {group.criteriaGroups.map((criteriaGroup) => {
-                          const allCriteriaSelected = areAllSelectedInCriteria(criteriaGroup.approvals);
                           const isNonFocus = criteriaGroup.approvals[0]?.non_focus_criteria;
                           const selectedCount = criteriaGroup.approvals.filter((a) => selectedIds.has(a.id)).length;
                           const hasSelection = selectedCount > 0;
@@ -251,15 +231,6 @@ export default function PendingApprovalsIndex({ groupedApprovals, totalPending, 
                               key={criteriaGroup.criteria.id}
                               title={
                                 <div className="flex items-center gap-2">
-                                  <Checkbox
-                                    checked={allCriteriaSelected}
-                                    onCheckedChange={() =>
-                                      allCriteriaSelected
-                                        ? deselectAllInCriteria(criteriaGroup.approvals)
-                                        : selectAllInCriteria(criteriaGroup.approvals)
-                                    }
-                                    onClick={(e) => e.stopPropagation()}
-                                  />
                                   <span className="text-sm font-medium">{criteriaGroup.criteria.name}</span>
                                   {isNonFocus && (
                                     <Badge variant="secondary" className="bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-100">

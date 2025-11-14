@@ -7,6 +7,7 @@ namespace App\Models;
 use App\Enums\Role;
 use App\Enums\Status;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -44,5 +45,13 @@ class User extends Authenticatable
             'status' => Status::class,
             'signup_token_expires_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Get the player progress records for the user.
+     */
+    public function playerProgress(): HasMany
+    {
+        return $this->hasMany(PlayerProgress::class);
     }
 }

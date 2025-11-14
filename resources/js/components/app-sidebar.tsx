@@ -3,10 +3,13 @@ import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
 import coaches from '@/routes/coaches';
+import pendingApprovals from '@/routes/pending-approvals';
+import playerProgress from '@/routes/player-progress';
 import players from '@/routes/players';
+import sessions from '@/routes/sessions';
 import { SharedData, type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { Calendar, ClipboardCheck, IdCardLanyard, LayoutGrid, Users } from 'lucide-react';
+import { Calendar, ClipboardCheck, IdCardLanyard, LayoutGrid, Users, UserStar } from 'lucide-react';
 import AppLogo from './app-logo';
 import { Separator } from './ui/separator';
 
@@ -18,14 +21,19 @@ const mainNavItems: NavItem[] = [
   },
   {
     title: 'Sessions',
-    href: '/sessions',
+    href: sessions.index(),
     icon: Calendar,
+  },
+  {
+    title: 'Player Progress',
+    href: playerProgress.index(),
+    icon: UserStar,
   },
 ];
 const adminNavItems: NavItem[] = [
   {
     title: 'Pending Approvals',
-    href: '/admin/pending-approvals',
+    href: pendingApprovals.index(),
     icon: ClipboardCheck,
   },
   {

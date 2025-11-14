@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
             'coach.or.admin' => \App\Http\Middleware\CoachOrAdminMiddleware::class,
+            'observer.or.coach.or.admin' => \App\Http\Middleware\AdminCoachOrObserver::class,
             'update.lastlogin' => \App\Http\Middleware\TrackLastLogin::class,
             // ... other middleware
         ]);
