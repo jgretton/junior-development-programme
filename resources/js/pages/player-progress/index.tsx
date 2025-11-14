@@ -1,5 +1,5 @@
-import { PlayerProgressDataTable } from '@/components/data-table/player-progress-data-table';
 import { createPlayerProgressColumns, type PlayerProgressData } from '@/components/data-table/columns/player-progress-columns';
+import { PlayerProgressDataTable } from '@/components/data-table/player-progress-data-table';
 import Heading from '@/components/heading';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,9 +7,9 @@ import AppLayout from '@/layouts/app-layout';
 import playerProgress from '@/routes/player-progress';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/react';
-import { Users, Award, BarChart3, Target } from 'lucide-react';
-import { Toaster } from 'sonner';
+import { Award, BarChart3, Target, Users } from 'lucide-react';
 import * as React from 'react';
+import { Toaster } from 'sonner';
 
 const breadcrumbs: BreadcrumbItem[] = [
   {
@@ -107,10 +107,7 @@ export default function PlayerProgressPage({ players, stats }: PlayerProgressPag
       <div className="container mx-auto mt-10 max-w-7xl px-4">
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:justify-between">
-          <Heading
-            title="Player Progress"
-            description="Track player development across all ranks and categories"
-          />
+          <Heading title="Player Progress" description="Track player development across all ranks and categories" />
         </div>
 
         {/* Stats Cards */}
@@ -123,9 +120,7 @@ export default function PlayerProgressPage({ players, stats }: PlayerProgressPag
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.totalPlayers}</div>
-              <CardDescription className="text-xs text-muted-foreground">
-                Active in programme
-              </CardDescription>
+              <CardDescription className="text-xs text-muted-foreground">Active in programme</CardDescription>
             </CardContent>
           </Card>
 
@@ -141,9 +136,6 @@ export default function PlayerProgressPage({ players, stats }: PlayerProgressPag
                   {stats.averageRank.name}
                 </Badge>
               </div>
-              <CardDescription className="mt-1 text-xs text-muted-foreground">
-                Level {stats.averageRank.level.toFixed(1)}
-              </CardDescription>
             </CardContent>
           </Card>
 
@@ -179,9 +171,7 @@ export default function PlayerProgressPage({ players, stats }: PlayerProgressPag
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.averageCompletion}%</div>
-              <CardDescription className="text-xs text-muted-foreground">
-                Overall progress
-              </CardDescription>
+              <CardDescription className="text-xs text-muted-foreground">Overall progress</CardDescription>
             </CardContent>
           </Card>
         </div>
