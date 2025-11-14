@@ -58,6 +58,24 @@ export const coaches_columns: ColumnDef<Player>[] = [
         </Button>
       );
     },
+    cell: ({ row, table }) => {
+      const meta = table.options.meta as { currentUserId?: string };
+      const isCurrentUser = meta?.currentUserId && row.original.id === meta.currentUserId;
+      const name = row.getValue('name') as string;
+
+      return (
+        <div className="flex items-center gap-2">
+          <span className={isCurrentUser ? 'font-bold' : ''}>
+            {name}
+          </span>
+          {isCurrentUser && (
+            <Badge variant="secondary" className="text-xs">
+              You
+            </Badge>
+          )}
+        </div>
+      );
+    },
   },
   {
     accessorKey: 'email',

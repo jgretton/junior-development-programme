@@ -24,9 +24,10 @@ interface DataTableProps<TData, TValue> {
   data: TData[];
   onEditPlayer?: (player: TData) => void;
   onDeletePlayer?: (player: TData) => void;
+  currentUserId?: string;
 }
 
-export function DataTable<TData, TValue>({ columns, data, onEditPlayer, onDeletePlayer }: DataTableProps<TData, TValue>) {
+export function DataTable<TData, TValue>({ columns, data, onEditPlayer, onDeletePlayer, currentUserId }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [rowSelection, setRowSelection] = React.useState({});
@@ -55,6 +56,7 @@ export function DataTable<TData, TValue>({ columns, data, onEditPlayer, onDelete
     meta: {
       editPlayer: onEditPlayer,
       deletePlayer: onDeletePlayer,
+      currentUserId: currentUserId,
     },
   });
 
@@ -85,13 +87,20 @@ export function DataTable<TData, TValue>({ columns, data, onEditPlayer, onDelete
           </TableHeader>
           <TableBody>
             {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
-                  ))}
-                </TableRow>
-              ))
+              table.getRowModel().rows.map((row) => {
+                const isCurrentUser = currentUserId && (row.original as any).id === currentUserId;
+                return (
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && 'selected'}
+                    className={isCurrentUser ? 'bg-primary/5 hover:bg-primary/10' : ''}
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
+                    ))}
+                  </TableRow>
+                );
+              })
             ) : (
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center">

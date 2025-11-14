@@ -6,7 +6,7 @@ import DeleteUserModal from '@/components/modals/delete-user-modal';
 import UpdateCoachSheet from '@/components/sheets/update-coach-sheet';
 import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem, Player } from '@/types';
-import { Head } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 import React from 'react';
 import { toast, Toaster } from 'sonner';
 const breadcrumbs: BreadcrumbItem[] = [
@@ -20,9 +20,13 @@ interface PageProps {
   coaches: Player[];
   error: string;
   flash: { error: string; success: string; warning: string };
+  auth: {
+    user: Player;
+  };
 }
 
 export default function Index({ coaches, error, flash }: PageProps) {
+  const { auth } = usePage<PageProps>().props;
   const [editingUser, setEditingUser] = React.useState<Player | null>();
   const [deletingPlayer, setDeletingPlayer] = React.useState<Player | null>();
   React.useEffect(() => {
@@ -40,7 +44,7 @@ export default function Index({ coaches, error, flash }: PageProps) {
             <AddCoachModal />
           </div>
         </div>
-        <DataTable columns={coaches_columns} data={coaches} onEditPlayer={setEditingUser} onDeletePlayer={setDeletingPlayer} />
+        <DataTable columns={coaches_columns} data={coaches} onEditPlayer={setEditingUser} onDeletePlayer={setDeletingPlayer} currentUserId={auth.user.id} />
         <UpdateCoachSheet player={editingUser} open={!!editingUser} onOpenChange={(open) => !open && setEditingUser(null)} />
         <DeleteUserModal type="coach" player={deletingPlayer} open={!!deletingPlayer} onOpenChange={(open) => !open && setDeletingPlayer(null)} />
       </div>

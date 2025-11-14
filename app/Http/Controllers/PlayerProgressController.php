@@ -6,6 +6,7 @@ use App\Enums\Role;
 use App\Models\Category;
 use App\Models\Criteria;
 use App\Models\PlayerProgress;
+use App\Models\PlayerProgressSummary;
 use App\Models\Rank;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -18,131 +19,36 @@ class PlayerProgressController extends Controller
      */
     public function index()
     {
-        // Get all ranks ordered by level
-        $ranks = Rank::orderBy('level')->get();
-
-        // Get all categories
-        $categories = Category::all();
-
-        // Get all criteria count (total possible criteria)
-        $totalCriteriaCount = Criteria::count();
-
-        // Get all players with their progress
-        $players = User::where('role', Role::PLAYER)
-            ->with(['playerProgress.criteria.rank', 'playerProgress.criteria.category'])
+        // Get all player summaries with user data - SINGLE EFFICIENT QUERY!
+        $players = PlayerProgressSummary::with(['user', 'currentRank'])
+            ->join('users', 'player_progress_summary.user_id', '=', 'users.id')
+            ->where('users.role', Role::PLAYER)
+            ->select('player_progress_summary.*')
             ->get()
-            ->map(function ($player) use ($ranks, $categories, $totalCriteriaCount) {
-                // Calculate progress by rank
-                $progressByRank = $ranks->map(function ($rank) use ($player) {
-                    $criteriaForRank = Criteria::where('rank_id', $rank->id)->count();
-                    $completedForRank = $player->playerProgress()
-                        ->whereHas('criteria', fn($q) => $q->where('rank_id', $rank->id))
-                        ->where('status', 'COMPLETED')
-                        ->count();
-
+            ->map(function ($summary) {
+                $rankProgress = collect($summary->rank_progress ?? [])->map(function ($rankData) {
                     return [
                         'rank' => [
-                            'name' => $rank->name,
-                            'level' => $rank->level,
+                            'name' => $rankData['name'],
+                            'level' => $rankData['level'],
                         ],
-                        'completed' => $completedForRank,
-                        'total' => $criteriaForRank,
-                        'percentage' => $criteriaForRank > 0
-                            ? round(($completedForRank / $criteriaForRank) * 100)
-                            : 0,
+                        'completed' => $rankData['completed'],
+                        'total' => $rankData['total'],
+                        'percentage' => $rankData['percentage'],
                     ];
-                });
-
-                // Calculate current rank (lowest incomplete rank)
-                $currentRank = null;
-                foreach ($progressByRank as $rankProgress) {
-                    if ($rankProgress['percentage'] < 100) {
-                        $currentRank = $rankProgress['rank'];
-                        break;
-                    }
-                }
-                // If all ranks are 100%, use the highest rank
-                if (!$currentRank) {
-                    $currentRank = $progressByRank->last()['rank'];
-                }
-
-                // Calculate category ranks
-                $categoryRanks = [];
-                foreach ($categories as $category) {
-                    // Get criteria for this category grouped by rank
-                    $categoryRankProgress = $ranks->map(function ($rank) use ($player, $category) {
-                        $criteriaForCategoryRank = Criteria::where('category_id', $category->id)
-                            ->where('rank_id', $rank->id)
-                            ->count();
-
-                        $completedForCategoryRank = $player->playerProgress()
-                            ->whereHas('criteria', fn($q) =>
-                                $q->where('category_id', $category->id)
-                                  ->where('rank_id', $rank->id)
-                            )
-                            ->where('status', 'COMPLETED')
-                            ->count();
-
-                        return [
-                            'rank' => $rank->name,
-                            'completed' => $completedForCategoryRank,
-                            'total' => $criteriaForCategoryRank,
-                            'percentage' => $criteriaForCategoryRank > 0
-                                ? round(($completedForCategoryRank / $criteriaForCategoryRank) * 100)
-                                : 0,
-                        ];
-                    });
-
-                    // Determine category rank (lowest incomplete)
-                    $categoryCurrentRank = null;
-                    foreach ($categoryRankProgress as $rankProg) {
-                        if ($rankProg['percentage'] < 100) {
-                            $categoryCurrentRank = $rankProg['rank'];
-                            break;
-                        }
-                    }
-                    if (!$categoryCurrentRank) {
-                        $categoryCurrentRank = $categoryRankProgress->last()['rank'];
-                    }
-
-                    // Overall category percentage
-                    $totalCategoryCriteria = Criteria::where('category_id', $category->id)->count();
-                    $completedCategoryCriteria = $player->playerProgress()
-                        ->whereHas('criteria', fn($q) => $q->where('category_id', $category->id))
-                        ->where('status', 'COMPLETED')
-                        ->count();
-
-                    $categoryPercentage = $totalCategoryCriteria > 0
-                        ? round(($completedCategoryCriteria / $totalCategoryCriteria) * 100)
-                        : 0;
-
-                    $categoryRanks[$category->name] = [
-                        'rank' => $categoryCurrentRank,
-                        'percentage' => $categoryPercentage,
-                    ];
-                }
-
-                // Overall stats
-                $completedCriteria = $player->playerProgress()
-                    ->where('status', 'COMPLETED')
-                    ->count();
-
-                $pendingCriteria = $player->playerProgress()
-                    ->where('status', 'PENDING')
-                    ->count();
-
-                $overallPercentage = $totalCriteriaCount > 0
-                    ? round(($completedCriteria / $totalCriteriaCount) * 100)
-                    : 0;
+                })->values()->toArray();
 
                 return [
-                    'id' => $player->id,
-                    'name' => $player->name,
-                    'email' => $player->email,
-                    'currentRank' => $currentRank,
-                    'overallProgress' => $overallPercentage,
-                    'categoryRanks' => $categoryRanks,
-                    'progressByRank' => $progressByRank->toArray(),
+                    'id' => $summary->user_id,
+                    'name' => $summary->user->name,
+                    'email' => $summary->user->email,
+                    'currentRank' => [
+                        'name' => $summary->currentRank->name ?? 'Bronze',
+                        'level' => $summary->currentRank->level ?? 1,
+                    ],
+                    'overallProgress' => $summary->overall_percentage,
+                    'categoryRanks' => $summary->category_progress ?? [],
+                    'progressByRank' => $rankProgress,
                 ];
             });
 
