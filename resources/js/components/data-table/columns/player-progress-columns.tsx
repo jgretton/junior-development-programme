@@ -148,6 +148,25 @@ export const createPlayerProgressColumns = (selectedCategory: string): ColumnDef
     columns.push(
       {
         id: 'categoryRank',
+        accessorFn: (row) => {
+          const categoryData = row.categoryRanks[selectedCategory];
+          if (!categoryData) return null;
+
+          const getRankLevel = (rankName: string) => {
+            switch (rankName.toLowerCase()) {
+              case 'bronze': return 1;
+              case 'silver': return 2;
+              case 'gold': return 3;
+              case 'platinum': return 4;
+              default: return 0;
+            }
+          };
+
+          // Create a sortable value: rank_level * 1000 + percentage
+          // This ensures Silver 1% (2001) > Bronze 99% (1099)
+          const rankLevel = getRankLevel(categoryData.rank);
+          return rankLevel * 1000 + categoryData.percentage;
+        },
         header: ({ column }) => {
           return (
             <Button
@@ -172,33 +191,14 @@ export const createPlayerProgressColumns = (selectedCategory: string): ColumnDef
             </Badge>
           );
         },
-        sortingFn: (rowA, rowB) => {
-          const getRankLevel = (rankName: string) => {
-            switch (rankName.toLowerCase()) {
-              case 'bronze': return 1;
-              case 'silver': return 2;
-              case 'gold': return 3;
-              case 'platinum': return 4;
-              default: return 0;
-            }
-          };
-
-          const aRankLevel = getRankLevel(rowA.original.categoryRanks[selectedCategory]?.rank || '');
-          const bRankLevel = getRankLevel(rowB.original.categoryRanks[selectedCategory]?.rank || '');
-          return aRankLevel - bRankLevel;
-        },
       },
       {
         id: 'categoryProgress',
-        header: ({ column }) => {
+        header: () => {
           return (
-            <Button
-              variant="ghost"
-              onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-            >
+            <div className="px-4">
               {selectedCategory} Progress
-              <ArrowUpDown className="ml-2 h-4 w-4" />
-            </Button>
+            </div>
           );
         },
         cell: ({ row }) => {
@@ -219,11 +219,7 @@ export const createPlayerProgressColumns = (selectedCategory: string): ColumnDef
             </div>
           );
         },
-        sortingFn: (rowA, rowB) => {
-          const aPercentage = rowA.original.categoryRanks[selectedCategory]?.percentage || 0;
-          const bPercentage = rowB.original.categoryRanks[selectedCategory]?.percentage || 0;
-          return aPercentage - bPercentage;
-        },
+        enableSorting: false,
       }
     );
   } else {
