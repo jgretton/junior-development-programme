@@ -8,6 +8,7 @@ use App\Models\Criteria;
 use App\Models\PlayerProgress;
 use App\Models\Session;
 use App\Models\User;
+use App\Services\PlayerProgressSummaryService;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -18,6 +19,9 @@ class SessionSeeder extends Seeder
      */
     public function run(): void
     {
+        // Disable observer during seeding for performance
+        PlayerProgress::unsetEventDispatcher();
+
         // Get all active players
         $activePlayers = User::where('role', Role::PLAYER)
             ->where('status', Status::ACTIVE)
@@ -65,16 +69,22 @@ class SessionSeeder extends Seeder
 
         // Create 1 pending session (assessed by coach)
         $this->createProgressionSession(
-            25, 
-            $coach, 
-            $activePlayers, 
-            $bronzeCriteria, 
-            $silverCriteria, 
+            25,
+            $coach,
+            $activePlayers,
+            $bronzeCriteria,
+            $silverCriteria,
             $goldCriteria,
-            $playerCompletedCriteria, 
+            $playerCompletedCriteria,
             $playerGroups,
             false
         );
+
+        // Rebuild player progress summaries after all progress has been seeded
+        $this->command->info('Rebuilding player progress summaries...');
+        $summaryService = app(PlayerProgressSummaryService::class);
+        $summaryService->rebuildAll();
+        $this->command->info('Player progress summaries rebuilt!');
     }
 
     private function categorizePlayersByProgression($players)
