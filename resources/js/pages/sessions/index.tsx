@@ -6,12 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Toaster } from '@/components/ui/sonner';
-import { useInfiniteScroll } from '@/hooks/use-infinite-scroll';
 import AppLayout from '@/layouts/app-layout';
 import { groupSessionsByMonth, isSessionUpcoming } from '@/lib/session-utils';
 import { BreadcrumbItem } from '@/types';
 import { FilterType, Session } from '@/types/session';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, InfiniteScroll } from '@inertiajs/react';
 import { PlusIcon, Search } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -23,47 +22,54 @@ const breadcrumbs: BreadcrumbItem[] = [
   },
 ];
 
-const ITEMS_PER_PAGE = 15;
+interface ScrollProp<T> {
+  data: T[];
+  links: any;
+  meta: any;
+}
+
+interface Counts {
+  all: number;
+  pending: number;
+  completed: number;
+  upcoming: number;
+}
 
 interface SessionsPageProps {
-  sessions: Session[];
+  sessions: ScrollProp<Session>;
+  counts: Counts;
   flash: { error: string; success: string; warning: string };
 }
 
-export default function SessionsPage({ sessions, flash }: SessionsPageProps) {
+export default function SessionsPage({ sessions, counts, flash }: SessionsPageProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<FilterType>('all');
 
+  // We need to access the items from the infinite scroll data.
+  // For the "Next" and "Last" cards, we ideally want the *latest* data.
+  // 'sessions.data' will contain the merged items as InfiniteScroll loads more.
+  const allItems = sessions.data || [];
+
   // Find next upcoming session
   const nextSession = useMemo(() => {
-    const upcomingSessions = sessions
-      .filter((s) => isSessionUpcoming(s.date))
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    const upcomingSessions = allItems
+      .filter((s: Session) => isSessionUpcoming(s.date))
+      .sort((a: Session, b: Session) => new Date(a.date).getTime() - new Date(b.date).getTime());
     return upcomingSessions[0] || null;
-  }, [sessions]);
+  }, [allItems]);
 
   // Find last past session
   const lastSession = useMemo(() => {
-    const pastSessions = sessions
-      .filter((s) => !isSessionUpcoming(s.date))
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    const pastSessions = allItems
+      .filter((s: Session) => !isSessionUpcoming(s.date))
+      .sort((a: Session, b: Session) => new Date(b.date).getTime() - new Date(a.date).getTime());
     return pastSessions[0] || null;
-  }, [sessions]);
+  }, [allItems]);
 
-  // Calculate counts for filter tabs
-  const filterCounts = useMemo(() => {
-    return {
-      all: sessions.length,
-      pending: sessions.filter((s) => !isSessionUpcoming(s.date) && !s.is_assessed).length,
-      completed: sessions.filter((s) => s.is_assessed).length,
-      upcoming: sessions.filter((s) => isSessionUpcoming(s.date)).length,
-    };
-  }, [sessions]);
-
-  // Filter sessions for the list
+  // Filter sessions for the list (client-side filtering of loaded items)
   const filteredSessions = useMemo(() => {
-    return sessions
-      .filter((s) => {
+    return allItems
+      .filter((s: Session) => {
         // Apply filter
         if (filter === 'pending') {
           return !isSessionUpcoming(s.date) && !s.is_assessed;
@@ -74,44 +80,26 @@ export default function SessionsPage({ sessions, flash }: SessionsPageProps) {
         }
         return true; // 'all'
       })
-      .filter((s) => {
+      .filter((s: Session) => {
         // Apply search
         if (!searchQuery) return true;
-        return s.name.toLowerCase().includes(searchQuery.toLowerCase());
+        const query = searchQuery.toLowerCase();
+        const date = new Date(s.date);
+        const dateString = date.toLocaleDateString('en-GB', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+        });
+
+        return (
+          s.name.toLowerCase().includes(query) ||
+          s.date.includes(query) ||
+          dateString.toLowerCase().includes(query)
+        );
       });
-  }, [sessions, searchQuery, filter]);
+  }, [allItems, searchQuery, filter]);
 
   const groupedSessions = useMemo(() => groupSessionsByMonth(filteredSessions), [filteredSessions]);
-
-  const { displayCount, loadMoreRef, hasMore, resetDisplayCount } = useInfiniteScroll({
-    itemsPerPage: ITEMS_PER_PAGE,
-    totalItems: filteredSessions.length,
-  });
-
-  const displayedGroups = useMemo(() => {
-    let count = 0;
-    const result = [];
-
-    for (const group of groupedSessions) {
-      const remainingInGroup = displayCount - count;
-      if (remainingInGroup <= 0) break;
-
-      const displayedSessions = group.sessions.slice(0, remainingInGroup);
-      if (displayedSessions.length > 0) {
-        result.push({
-          ...group,
-          sessions: displayedSessions,
-        });
-        count += displayedSessions.length;
-      }
-    }
-
-    return result;
-  }, [groupedSessions, displayCount]);
-
-  useEffect(() => {
-    resetDisplayCount();
-  }, [searchQuery, filter, resetDisplayCount]);
 
   useEffect(() => {
     if (flash?.success) toast.success(flash.success);
@@ -160,24 +148,26 @@ export default function SessionsPage({ sessions, flash }: SessionsPageProps) {
             <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="all" className="relative">
                 All
-                <span className="ml-1.5 text-xs text-muted-foreground">({filterCounts.all})</span>
+                <span className="ml-1.5 text-xs text-muted-foreground">({counts.all})</span>
               </TabsTrigger>
               <TabsTrigger value="pending" className="relative">
                 Pending
-                <span className="ml-1.5 text-xs text-muted-foreground">({filterCounts.pending})</span>
+                <span className="ml-1.5 text-xs text-muted-foreground">({counts.pending})</span>
               </TabsTrigger>
               <TabsTrigger value="completed" className="relative">
                 Assessed
-                <span className="ml-1.5 text-xs text-muted-foreground">({filterCounts.completed})</span>
+                <span className="ml-1.5 text-xs text-muted-foreground">({counts.completed})</span>
               </TabsTrigger>
               <TabsTrigger value="upcoming" className="relative">
                 Upcoming
-                <span className="ml-1.5 text-xs text-muted-foreground">({filterCounts.upcoming})</span>
+                <span className="ml-1.5 text-xs text-muted-foreground">({counts.upcoming})</span>
               </TabsTrigger>
             </TabsList>
           </Tabs>
 
-          <SessionList groups={displayedGroups} hasMore={hasMore} loadMoreRef={loadMoreRef} />
+          <InfiniteScroll data="sessions">
+            <SessionList groups={groupedSessions} />
+          </InfiniteScroll>
         </div>
       </div>
     </AppLayout>

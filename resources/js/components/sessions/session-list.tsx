@@ -3,11 +3,9 @@ import { SessionGroup } from '@/types/session';
 
 interface SessionListProps {
   groups: SessionGroup[];
-  hasMore: boolean;
-  loadMoreRef: React.RefObject<HTMLDivElement | null>;
 }
 
-export function SessionList({ groups, hasMore, loadMoreRef }: SessionListProps) {
+export function SessionList({ groups }: SessionListProps) {
   if (groups.length === 0) {
     return (
       <div className="rounded-lg border border-dashed py-12 text-center">
@@ -32,7 +30,6 @@ export function SessionList({ groups, hasMore, loadMoreRef }: SessionListProps) 
           </div>
         </div>
       ))}
-      {hasMore && <div ref={loadMoreRef} className="h-10" />}
     </>
   );
 }

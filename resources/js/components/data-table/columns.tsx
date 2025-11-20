@@ -132,7 +132,16 @@ export const columns: ColumnDef<Player>[] = [
   },
   {
     accessorKey: 'last_login_at',
-    header: () => <div className="text-center">Last Logged In</div>,
+    header: ({ column }) => {
+      return (
+        <div className="text-center">
+          <Button variant="ghost" className="w-full" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+            Last Logged In
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        </div>
+      );
+    },
 
     cell: ({ row }) => {
       const lastLogin = row.getValue('last_login_at') as string | null;

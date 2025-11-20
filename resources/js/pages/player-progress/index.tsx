@@ -104,7 +104,7 @@ export default function PlayerProgressPage({ players, stats }: PlayerProgressPag
       <Head title="Player Progress" />
       <Toaster richColors expand position="top-center" />
 
-      <div className="container mx-auto mt-10 max-w-7xl px-4">
+      <div className="container mx-auto mt-10 max-w-7xl px-4 pb-16">
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:justify-between">
           <Heading title="Player Progress" description="Track player development across all ranks and categories" />

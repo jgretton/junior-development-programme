@@ -25,11 +25,10 @@ class SessionController extends Controller
      */
     public function index()
     {
-        //
-        $sessions = Session::with('criteria')->orderBy('date', 'DESC')->get();
+        $sessions = Session::with('criteria')->orderBy('date', 'DESC')->paginate(15);
 
         // Add is_assessed flag to each session
-        $sessions = $sessions->map(function ($session) {
+        $sessions->through(function ($session) {
             $attendanceCount = DB::table('session_attendance')
                 ->where('session_id', $session->id)
                 ->count();
@@ -39,8 +38,18 @@ class SessionController extends Controller
             return $session;
         });
 
+        // Calculate counts
+        $now = now();
+        $counts = [
+            'all' => Session::count(),
+            'upcoming' => Session::where('date', '>', $now)->count(),
+            'completed' => Session::whereHas('attendees')->count(), // Assessed
+            'pending' => Session::where('date', '<=', $now)->whereDoesntHave('attendees')->count(),
+        ];
+
         return Inertia::render('sessions/index', [
-            'sessions' => $sessions,
+            'sessions' => Inertia::scroll($sessions),
+            'counts' => $counts,
         ]);
     }
 
