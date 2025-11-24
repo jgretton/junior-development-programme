@@ -4,8 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\Role;
 use App\Enums\Status;
-use App\Http\Requests\StoreAssessmentRequest;
-use App\Http\Requests\StoreSessionRequest;
+use App\Http\Requests\StoreSessionWithAssessmentRequest;
 use App\Models\Category;
 use App\Models\Criteria;
 use App\Models\PlayerProgress;
@@ -25,30 +24,49 @@ class SessionController extends Controller
      */
     public function index()
     {
-        $sessions = Session::with('criteria')->orderBy('date', 'DESC')->paginate(15);
+        // Get session IDs that have pending player progress (awaiting admin approval)
+        $pendingSessionIds = PlayerProgress::where('status', 'PENDING')
+            ->distinct()
+            ->pluck('session_id');
 
-        // Add is_assessed flag to each session
-        $sessions->through(function ($session) {
-            $attendanceCount = DB::table('session_attendance')
-                ->where('session_id', $session->id)
-                ->count();
+        // Pending approval sessions (have PENDING player progress)
+        $pendingSessions = Session::whereIn('id', $pendingSessionIds)
+            ->withCount('attendees')
+            ->orderBy('date', 'DESC')
+            ->get()
+            ->map(fn($session) => [
+                'id' => $session->id,
+                'name' => $session->name,
+                'date' => $session->date,
+                'focus_areas' => $session->focus_areas,
+                'attendees_count' => $session->attendees_count,
+                'status' => 'pending',
+            ]);
 
-            $session->is_assessed = $attendanceCount > 0;
+        // Completed sessions (no PENDING player progress, all approved)
+        $completedSessions = Session::whereNotIn('id', $pendingSessionIds)
+            ->whereHas('attendees') // Only sessions that have been assessed
+            ->withCount('attendees')
+            ->orderBy('date', 'DESC')
+            ->paginate(15)
+            ->through(fn($session) => [
+                'id' => $session->id,
+                'name' => $session->name,
+                'date' => $session->date,
+                'focus_areas' => $session->focus_areas,
+                'attendees_count' => $session->attendees_count,
+                'status' => 'completed',
+            ]);
 
-            return $session;
-        });
-
-        // Calculate counts
-        $now = now();
+        // Counts for summary
         $counts = [
-            'all' => Session::count(),
-            'upcoming' => Session::where('date', '>', $now)->count(),
-            'completed' => Session::whereHas('attendees')->count(), // Assessed
-            'pending' => Session::where('date', '<=', $now)->whereDoesntHave('attendees')->count(),
+            'pending' => $pendingSessions->count(),
+            'completed' => Session::whereNotIn('id', $pendingSessionIds)->whereHas('attendees')->count(),
         ];
 
         return Inertia::render('sessions/index', [
-            'sessions' => Inertia::scroll($sessions),
+            'pendingSessions' => $pendingSessions,
+            'completedSessions' => Inertia::scroll($completedSessions),
             'counts' => $counts,
         ]);
     }
@@ -58,8 +76,14 @@ class SessionController extends Controller
      */
     public function create()
     {
-        $criteriaData = [];
+        // Get all active players for attendance selection
+        $players = User::where('role', Role::PLAYER)
+            ->where('status', Status::ACTIVE)
+            ->select(['id', 'name'])
+            ->get();
 
+        // Get criteria organized by category and rank
+        $criteriaData = [];
         $categories = Category::with([
             'criteria' => function ($query) {
                 $query->with('rank')->orderBy('rank_id');
@@ -82,17 +106,31 @@ class SessionController extends Controller
             }
         }
 
+        // Get existing player achievements to disable already-completed criteria
+        $existingAchievements = PlayerProgress::where('status', 'COMPLETED')
+            ->select(['user_id', 'criteria_id'])
+            ->get()
+            ->groupBy('user_id')
+            ->map(fn($records) => $records->pluck('criteria_id')->toArray())
+            ->toArray();
+
         return Inertia::render('sessions/create', [
-            'criteria' => $criteriaData,
+            'players' => $players,
+            'criteriaData' => $criteriaData,
+            'existingAchievements' => $existingAchievements,
         ]);
     }
 
     /**
      * Store a newly created resource in storage.
+     * Handles session creation, attendance, and assessments in one transaction.
      */
-    public function store(StoreSessionRequest $request)
+    public function store(StoreSessionWithAssessmentRequest $request)
     {
+        DB::beginTransaction();
+
         try {
+            // Create the session
             $session = Session::create([
                 'name' => $request->validated()['name'],
                 'date' => $request->validated()['date'],
@@ -100,10 +138,47 @@ class SessionController extends Controller
                 'focus_areas' => $request->validated()['focus_areas'] ?? null,
             ]);
 
-            $session->criteria()->attach($request->validated()['criteria']);
+            // Insert attendance records
+            $attendance = [];
+            foreach ($request->validated()['attendingPlayers'] as $playerId) {
+                $attendance[] = [
+                    'session_id' => $session->id,
+                    'player_id' => $playerId,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            }
+            DB::table('session_attendance')->insertOrIgnore($attendance);
+
+            // Insert player progress records
+            $isAdmin = Auth::user()->role === Role::ADMIN;
+            $progress = [];
+
+            foreach ($request->validated()['assignments'] as $criteriaId => $playerIds) {
+                foreach ($playerIds as $playerId) {
+                    $progress[] = [
+                        'user_id' => $playerId,
+                        'criteria_id' => $criteriaId,
+                        'status' => $isAdmin ? 'COMPLETED' : 'PENDING',
+                        'session_id' => $session->id,
+                        'assessed_by' => Auth::id(),
+                        'approved_by' => $isAdmin ? Auth::id() : null,
+                        'assessed_at' => now(),
+                        'approved_at' => $isAdmin ? now() : null,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ];
+                }
+            }
+
+            PlayerProgress::insertOrIgnore($progress);
+
+            DB::commit();
 
             return redirect()->route('sessions.show', $session)->with('success', 'Session created successfully!');
         } catch (\Exception $e) {
+            DB::rollBack();
+
             Log::error('SessionController@store failed', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
@@ -123,24 +198,21 @@ class SessionController extends Controller
     public function show(Session $training_session)
     {
         // Render a single session.
-        $session = Session::with(['criteria', 'attendees:id,name'])->findOrFail($training_session->id);
+        $session = Session::with(['attendees:id,name'])->findOrFail($training_session->id);
 
-        //find player progress from session
+        // Find player progress from session
         $progress = PlayerProgress::with(['criteria', 'user'])
             ->where('session_id', $training_session->id)
             ->get();
 
-        // Get attending player IDs for easy comparison
+        // Get attending players
         $attendance = $session->attendees;
         $attendingPlayerIds = $attendance->pluck('id');
 
-        // Build criteria progress array for session focus criteria
-        $criteriaProgress = $session->criteria->map(function ($criteria) use ($progress, $attendance, $attendingPlayerIds) {
-            // Get progress records for this specific criteria (only non-focus)
-            $criteriaProgressRecords = $progress->where('criteria_id', $criteria->id)->where('non_focus_criteria', false);
-
-            // Get IDs of players who achieved this criteria
-            $achievedPlayerIds = $criteriaProgressRecords->pluck('user_id');
+        // Build criteria progress array - group by criteria
+        $criteriaProgress = $progress->groupBy('criteria_id')->map(function ($records) use ($attendance, $attendingPlayerIds) {
+            $criteria = $records->first()->criteria;
+            $achievedPlayerIds = $records->pluck('user_id');
 
             // Find IDs of players who didn't achieve it (attended but not in achieved list)
             $notAchievedPlayerIds = $attendingPlayerIds->diff($achievedPlayerIds);
@@ -157,30 +229,12 @@ class SessionController extends Controller
                 'achieved' => $achievedPlayers,
                 'notAchieved' => $notAchievedPlayers,
             ];
-        });
-
-        // Build additional criteria progress array (non-focus)
-        $additionalProgress = $progress->where('non_focus_criteria', true)->groupBy('criteria_id')->map(function ($records) use ($attendance) {
-            $criteria = $records->first()->criteria;
-            $achievedPlayerIds = $records->pluck('user_id');
-
-            // For additional criteria, we don't track "not achieved" since they weren't planned
-            $achievedPlayers = $attendance->whereIn('id', $achievedPlayerIds)->values();
-
-            return [
-                'criteria' => [
-                    'id' => $criteria->id,
-                    'name' => $criteria->name,
-                ],
-                'achieved' => $achievedPlayers,
-            ];
         })->values();
 
         return Inertia::render('sessions/[id]/index', [
             'session' => $session,
             'attendance' => $attendance,
             'criteriaProgress' => $criteriaProgress,
-            'additionalProgress' => $additionalProgress,
         ]);
     }
 
@@ -206,115 +260,5 @@ class SessionController extends Controller
     public function destroy(Session $session)
     {
         //
-    }
-
-    public function assessment(Session $training_session)
-    {
-        // Route model binding automatically returns 404 if session doesn't exist
-        // No need for manual checks
-
-        $players = User::where('role', Role::PLAYER)
-            ->where('status', Status::ACTIVE)
-            ->select(['id', 'name'])
-            ->get();
-
-        $session = Session::with([
-            'criteria' => function ($query) {
-                $query->with(['category:id,name', 'rank:id,name'])
-                    ->select(['criterias.id', 'criterias.name', 'criterias.category_id', 'criterias.rank_id']);
-            },
-        ])->findOrFail($training_session->id);
-
-        // Get all criteria data for additional criteria selection
-        $criteriaData = [];
-        $categories = Category::with([
-            'criteria' => function ($query) {
-                $query->with('rank')->orderBy('rank_id');
-            },
-        ])->get();
-
-        foreach ($categories as $category) {
-            $categoryKey = strtolower($category->name);
-            $criteriaData[$categoryKey] = [];
-
-            foreach ($category->criteria as $criterion) {
-                $rankKey = strtolower($criterion->rank->name);
-                if (!isset($criteriaData[$categoryKey][$rankKey])) {
-                    $criteriaData[$categoryKey][$rankKey] = [];
-                }
-                $criteriaData[$categoryKey][$rankKey][] = [
-                    'id' => $criterion->id,
-                    'name' => $criterion->name,
-                ];
-            }
-        }
-
-        // Return new session screen with session criteria and players
-        return Inertia::render('sessions/[id]/assessment/index', [
-            'players' => $players,
-            'session' => $session,
-            'criteriaData' => $criteriaData,
-        ]);
-    }
-
-    public function storeAssessment(StoreAssessmentRequest $request, Session $training_session)
-    {
-        DB::beginTransaction();
-
-        try {
-            // Insert attendance records
-            $attendance = [];
-            foreach ($request->attendingPlayers as $playerId) {
-                $attendance[] = [
-                    'session_id' => $training_session->id,
-                    'player_id' => $playerId,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ];
-            }
-
-            DB::table('session_attendance')->insertOrIgnore($attendance);
-
-            $isAdmin = Auth::user()->role === Role::ADMIN;
-            $additionalCriteriaIds = $request->additionalCriteriaIds ?? [];
-            $progress = [];
-
-            foreach ($request->assignments as $criteriaId => $playersId) {
-                // Check if this criteria is additional (non-focus)
-                $isNonFocus = in_array((int) $criteriaId, $additionalCriteriaIds);
-
-                foreach ($playersId as $playerId) {
-                    $progress[] = [
-                        'user_id' => $playerId,
-                        'criteria_id' => $criteriaId,
-                        'status' => $isAdmin ? 'COMPLETED' : 'PENDING',
-                        'session_id' => $training_session->id,
-                        'assessed_by' => Auth::id(),
-                        'approved_by' => $isAdmin ? Auth::id() : null,
-                        'assessed_at' => now(),
-                        'approved_at' => $isAdmin ? now() : null,
-                        'non_focus_criteria' => $isNonFocus,
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ];
-                }
-            }
-
-            PlayerProgress::insertOrIgnore($progress);
-
-            DB::commit();
-
-            return redirect()->route('sessions.show', $training_session)->with('success', 'Assessment submitted successfully!');
-        } catch (\Exception $e) {
-            DB::rollBack();
-
-            Log::error('Assessment submission failed', [
-                'error' => $e->getMessage(),
-                'session_id' => $training_session->id,
-                'user_id' => Auth::id(),
-            ]);
-
-            return redirect()->back()->with('error', 'Failed to submit assessment. Please try again.');
-        }
     }
 }

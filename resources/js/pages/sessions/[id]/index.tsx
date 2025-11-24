@@ -1,32 +1,25 @@
 import Heading from '@/components/heading';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CollapsibleCard } from '@/components/ui/collapsible-card';
 import { Toaster } from '@/components/ui/sonner';
 import AppLayout from '@/layouts/app-layout';
-import { CATEGORY_NAMES, formatSessionDate, getCriteriaBreakdown, isSessionUpcoming, RANK_NAMES } from '@/lib/session-utils';
+import { formatSessionDate, isSessionUpcoming } from '@/lib/session-utils';
 import { BreadcrumbItem } from '@/types';
 import { CriteriaProgress, Player, Session } from '@/types/session';
-import { Head, Link } from '@inertiajs/react';
-import { Calendar, Check, ClipboardCheck, Edit, Target, Users, X } from 'lucide-react';
+import { Head } from '@inertiajs/react';
+import { Calendar, Check, Target, Users, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-
-interface AdditionalProgress {
-  criteria: { id: number; name: string };
-  achieved: Player[];
-}
 
 interface SingleSessionPageProps {
   session: Session;
   attendance?: Player[];
   criteriaProgress?: CriteriaProgress[];
-  additionalProgress?: AdditionalProgress[];
   flash: { error: string; success: string; warning: string };
 }
 
-export default function SingleSessionPage({ session, attendance, flash, criteriaProgress, additionalProgress }: SingleSessionPageProps) {
+export default function SingleSessionPage({ session, attendance, flash, criteriaProgress }: SingleSessionPageProps) {
   const [isCriteriaOpen, setIsCriteriaOpen] = useState(false);
   const [highPerformersOpen, setHighPerformersOpen] = useState(false);
   const [goodProgressOpen, setGoodProgressOpen] = useState(false);
@@ -41,7 +34,6 @@ export default function SingleSessionPage({ session, attendance, flash, criteria
   const isAssessed = attendance && attendance.length > 0;
   const isUpcoming = isSessionUpcoming(session.date);
   const formattedDate = formatSessionDate(session.date);
-  const criteriaCount = getCriteriaBreakdown(session);
 
   const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -80,21 +72,6 @@ export default function SingleSessionPage({ session, attendance, flash, criteria
               <span className="text-sm text-muted-foreground">{getStatusText()}</span>
             </div>
           </div>
-          {isAssessed ? (
-            <Button variant="outline" asChild>
-              <Link href={`/sessions/${session.id}/assessment`}>
-                <Edit className="mr-2 h-4 w-4" />
-                Edit Assessment
-              </Link>
-            </Button>
-          ) : (
-            <Button asChild>
-              <Link href={`/sessions/${session.id}/assessment`}>
-                <ClipboardCheck className="mr-2 h-4 w-4" />
-                Start Assessment
-              </Link>
-            </Button>
-          )}
         </div>
 
         <div className="space-y-6">
@@ -118,19 +95,6 @@ export default function SingleSessionPage({ session, attendance, flash, criteria
                   <div className="flex-1">
                     <p className="text-sm font-medium">Focus Areas</p>
                     <p className="text-sm text-muted-foreground">{session.focus_areas}</p>
-                  </div>
-                </div>
-              )}
-
-              {criteriaCount && (
-                <div className="pt-2">
-                  <p className="mb-2 text-sm font-medium">Criteria Summary</p>
-                  <div className="flex flex-wrap gap-2">
-                    {Object.entries(criteriaCount).map(([rank, count]) => (
-                      <Badge key={rank} variant="secondary">
-                        {rank}: {count}
-                      </Badge>
-                    ))}
                   </div>
                 </div>
               )}
@@ -380,48 +344,6 @@ export default function SingleSessionPage({ session, attendance, flash, criteria
                   </CardContent>
                 </Card>
 
-                {/* Additional Achievements */}
-                {additionalProgress && additionalProgress.length > 0 && (
-                  <Card className="border-purple-200 dark:border-purple-800">
-                    <CardHeader>
-                      <div className="flex items-center gap-2">
-                        <CardTitle className="flex items-center gap-2 text-purple-700 dark:text-purple-300">
-                          <Target className="h-5 w-5" />
-                          Additional Achievements
-                        </CardTitle>
-                        <Badge variant="outline" className="border-purple-300 text-purple-600 dark:border-purple-700 dark:text-purple-400">
-                          Non-Focus
-                        </Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      {additionalProgress.map((progress) => {
-                        const achievedCount = progress.achieved.length;
-
-                        return (
-                          <div key={progress.criteria.id} className="rounded-lg border border-dashed border-purple-200 bg-purple-50/50 p-4 dark:border-purple-800 dark:bg-purple-950/20">
-                            <div className="mb-3 flex items-start justify-between">
-                              <h4 className="font-medium">{progress.criteria.name}</h4>
-                              <Badge variant="default" className="bg-purple-600 dark:bg-purple-700">
-                                {achievedCount} player{achievedCount !== 1 ? 's' : ''}
-                              </Badge>
-                            </div>
-                            {progress.achieved.length > 0 && (
-                              <div className="flex flex-wrap gap-2">
-                                {progress.achieved.map((player) => (
-                                  <Badge key={player.id} variant="outline" className="border-purple-300 text-purple-700 dark:border-purple-700 dark:text-purple-300">
-                                    {player.name}
-                                  </Badge>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </CardContent>
-                  </Card>
-                )}
-
                 {/* Detailed Breakdown - Collapsible */}
                 <CollapsibleCard
                   title="Detailed Results"
@@ -497,26 +419,6 @@ export default function SingleSessionPage({ session, attendance, flash, criteria
             );
           })()}
 
-          {/* Criteria Details - Only show if not assessed */}
-          {!isAssessed && session.criteria && session.criteria.length > 0 && (
-            <CollapsibleCard
-              title="Criteria Details"
-              description="View all criteria for this session"
-              open={isCriteriaOpen}
-              onOpenChange={setIsCriteriaOpen}>
-              <div className="space-y-3">
-                {session.criteria.map((criterion) => (
-                  <div key={criterion.id} className="rounded-lg border bg-muted/20 p-4">
-                    <div className="mb-2 flex flex-wrap items-center gap-2">
-                      <Badge variant="secondary">{RANK_NAMES[criterion.rank_id]}</Badge>
-                      <Badge variant="outline">{CATEGORY_NAMES[criterion.category_id]}</Badge>
-                    </div>
-                    <p className="text-sm leading-relaxed text-foreground">{criterion.name}</p>
-                  </div>
-                ))}
-              </div>
-            </CollapsibleCard>
-          )}
         </div>
       </div>
     </AppLayout>

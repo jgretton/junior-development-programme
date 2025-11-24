@@ -20,6 +20,8 @@ export interface Session {
     focus_areas?: string;
     criteria?: SessionCriteria[];
     is_assessed?: boolean;
+    attendees_count?: number;
+    status?: 'pending' | 'completed';
 }
 
 export type FilterType = 'all' | 'upcoming' | 'pending' | 'completed';

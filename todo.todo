@@ -32,11 +32,11 @@ claude:
 
     Post meeting:
         Player Admin:
-            ☐ on player admin - have active card. Remove junior card as all players are junior.
+            ✔ on player admin - have active card. Remove junior card as all players are junior. @done(25-11-24 12:32)
         Sessions:
-            ☐ Remove creating a session
-                ☐ This is going to be a flow. Remove the initial steps so the creating of a session is the logging of a session. Keep name and date. Then show attendance selection, next button, to the criteria allocated. This is the same as the sessions flow currently, but the user goes through and selects all criteria they see etc and then allocates to players.
-             Post session analytics:
+            ✔ Remove creating a session @done(25-11-24 17:18)
+                ✔ This is going to be a flow. Remove the initial steps so the creating of a session is the logging of a session. Keep name and date. Then show attendance selection, next button, to the criteria allocated. This is the same as the sessions flow currently, but the user goes through and selects all criteria they see etc and then allocates to players. @done(25-11-24 17:17)
+        Post session analytics:
                 ☐ More club realted stats.
                 ☐ % of people who achieved something. % of how much progress in X category or Rank. How many people have completed this criteria across the club.
                 ☐ show the category as the main focus not the criteria. - X amount of people progressed in hitting today, X progress in passing. then under show the breawkdown of the criteria. This way the coaches can see how well the session did. ig it was a hitting session but most people progresed in setting then the focus of the session was wrong.
@@ -47,8 +47,8 @@ claude:
 
         Player progress: 
              Cards:
-                ☐ Working towards - not rank distrubution.
-                ☐ Average per rank. So, out of all the bronze players the average is bronze 3*, silver is 1*
-                ☐ remove emails
+                ✔ Working towards - not rank distrubution. @done(25-11-24 12:32)
+                ✔ Average per rank. So, out of all the bronze players the average is bronze 3*, silver is 1* @done(25-11-24 12:32)
+                ✔ remove emails @done(25-11-24 12:32)
                 
         

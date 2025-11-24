@@ -95,20 +95,6 @@ export function CriteriaSelector({ criteriaData, selectedIds = [], disabledIds =
     return selectedIds.filter((id) => rankIds.includes(id)).length;
   };
 
-  const getSelectedCriteriaNames = () => {
-    const names: string[] = [];
-    Object.values(criteriaData).forEach((categoryData) => {
-      Object.values(categoryData).forEach((criteria) => {
-        criteria.forEach((c) => {
-          if (selectedIds.includes(c.id)) {
-            names.push(c.name);
-          }
-        });
-      });
-    });
-    return names;
-  };
-
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
@@ -215,18 +201,6 @@ export function CriteriaSelector({ criteriaData, selectedIds = [], disabledIds =
         ))}
       </Tabs>
 
-      {selectedIds.length > 0 && (
-        <div className="mt-6 border-t pt-4">
-          <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Selected ({selectedIds.length})
-          </p>
-          <div className="space-y-1 text-sm">
-            {getSelectedCriteriaNames().map((name) => (
-              <div key={name}>{name}</div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

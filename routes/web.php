@@ -41,8 +41,6 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/sessions/create', [SessionController::class, 'create']);
         Route::post('/sessions', [SessionController::class, 'store']);
         Route::get('/sessions/{training_session}/edit', [SessionController::class, 'edit']);
-        Route::get('/sessions/{training_session}/assessment', [SessionController::class, 'assessment']);
-        Route::post('/sessions/{training_session}/assessment', [SessionController::class, 'storeAssessment']);
 
         // Route::put('/sessions/{session}', [SessionController::class, 'update']);
         // Route::delete('/sessions/{session}', [SessionController::class, 'destroy']);
