@@ -1,0 +1,54 @@
+Minor Changes:
+    ☐ Remove dark mode
+    ☐ Remove users option to change name / email
+    ✔ Have / as login page @done(25-11-06 11:27)
+    ✔ Remove reguster button @done(25-11-06 11:27)
+    ☐ Factory for assessment sessions. Dont have as many and also feed fake data.
+
+
+Feature:
+    Player progress:
+        ☐ Fix stats for sessions as they include player who have completed criteria.
+
+        ☐ Add pending process for player progress updates
+            ☐ Dashboard? Or do i put them on their own page?
+            - when assessment has been saved by a coach the assessment stays as pending.. (this is due to the progress not being returned in controller?)
+        ☐ Create controller and page for player progress information
+        ☐ Think about data structure for storing averages for each player. 
+
+
+claude:
+    
+    ☐ I want the criteria in each session to be collapsible card
+    ☐ TOo many approval options in the process. Tick and crosses everywhere multiple approval buttons. lets streamline this. dont need the ticks but keep the bin. Maybe have something floating at the bottom of the screen that gives them the appocal info insterad of at the top of all the cards?
+    ☐ how to update pending approvals without needind to refresh the page?
+
+
+
+    Things to think about:
+        - Multiple guardian emails?
+        - Status, keep inactive or just have active and archived.
+
+
+    Post meeting:
+        Player Admin:
+            ☐ on player admin - have active card. Remove junior card as all players are junior.
+        Sessions:
+            ☐ Remove creating a session
+                ☐ This is going to be a flow. Remove the initial steps so the creating of a session is the logging of a session. Keep name and date. Then show attendance selection, next button, to the criteria allocated. This is the same as the sessions flow currently, but the user goes through and selects all criteria they see etc and then allocates to players.
+             Post session analytics:
+                ☐ More club realted stats.
+                ☐ % of people who achieved something. % of how much progress in X category or Rank. How many people have completed this criteria across the club.
+                ☐ show the category as the main focus not the criteria. - X amount of people progressed in hitting today, X progress in passing. then under show the breawkdown of the criteria. This way the coaches can see how well the session did. ig it was a hitting session but most people progresed in setting then the focus of the session was wrong.
+                ☐ overview of club criteria - player progress in hitting etc.
+
+        Pending approval:
+            ☐ add rank and star rating next to name
+
+        Player progress: 
+             Cards:
+                ☐ Working towards - not rank distrubution.
+                ☐ Average per rank. So, out of all the bronze players the average is bronze 3*, silver is 1*
+                ☐ remove emails
+                
+        
