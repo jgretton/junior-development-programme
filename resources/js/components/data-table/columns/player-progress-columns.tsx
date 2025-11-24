@@ -7,7 +7,6 @@ import { ArrowUpDown, ChevronDown, ChevronRight } from 'lucide-react';
 export type PlayerProgressData = {
   id: number;
   name: string;
-  email: string;
   currentRank: {
     name: string;
     level: number;
@@ -57,11 +56,7 @@ export const createPlayerProgressColumns = (selectedCategory: string): ColumnDef
       accessorKey: 'name',
       header: ({ column }) => {
         return (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-            className="-ml-4"
-          >
+          <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')} className="-ml-4">
             Player
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
@@ -70,21 +65,11 @@ export const createPlayerProgressColumns = (selectedCategory: string): ColumnDef
       cell: ({ row }) => {
         return (
           <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => row.toggleExpanded()}
-              className="h-6 w-6 p-0"
-            >
-              {row.getIsExpanded() ? (
-                <ChevronDown className="h-4 w-4" />
-              ) : (
-                <ChevronRight className="h-4 w-4" />
-              )}
+            <Button variant="ghost" size="sm" onClick={() => row.toggleExpanded()} className="h-6 w-6 p-0">
+              {row.getIsExpanded() ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
             </Button>
             <div>
               <div className="font-medium">{row.original.name}</div>
-              <div className="text-sm text-muted-foreground">{row.original.email}</div>
             </div>
           </div>
         );
@@ -94,10 +79,7 @@ export const createPlayerProgressColumns = (selectedCategory: string): ColumnDef
       accessorKey: 'currentRank',
       header: ({ column }) => {
         return (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-          >
+          <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
             Current Rank
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
@@ -106,22 +88,15 @@ export const createPlayerProgressColumns = (selectedCategory: string): ColumnDef
       cell: ({ row }) => {
         const rank = row.original.currentRank;
         // Find the progress for the current rank
-        const currentRankProgress = row.original.progressByRank.find(
-          (r) => r.rank.level === rank.level
-        );
+        const currentRankProgress = row.original.progressByRank.find((r) => r.rank.level === rank.level);
         const rankPercentage = currentRankProgress?.percentage || 0;
 
         return (
           <div className="flex items-center gap-2">
-            <Badge
-              variant="outline"
-              className={`${getRankColor(rank.name)} font-semibold`}
-            >
+            <Badge variant="outline" className={`${getRankColor(rank.name)} font-semibold`}>
               {rank.name}
             </Badge>
-            <span className="text-sm font-medium text-muted-foreground">
-              {rankPercentage}%
-            </span>
+            <span className="text-sm font-medium text-muted-foreground">{rankPercentage}%</span>
           </div>
         );
       },
@@ -131,12 +106,8 @@ export const createPlayerProgressColumns = (selectedCategory: string): ColumnDef
         if (levelDiff !== 0) return levelDiff;
 
         // If same rank, sort by percentage
-        const rowAProgress = rowA.original.progressByRank.find(
-          (r) => r.rank.level === rowA.original.currentRank.level
-        );
-        const rowBProgress = rowB.original.progressByRank.find(
-          (r) => r.rank.level === rowB.original.currentRank.level
-        );
+        const rowAProgress = rowA.original.progressByRank.find((r) => r.rank.level === rowA.original.currentRank.level);
+        const rowBProgress = rowB.original.progressByRank.find((r) => r.rank.level === rowB.original.currentRank.level);
 
         return (rowAProgress?.percentage || 0) - (rowBProgress?.percentage || 0);
       },
@@ -154,11 +125,16 @@ export const createPlayerProgressColumns = (selectedCategory: string): ColumnDef
 
           const getRankLevel = (rankName: string) => {
             switch (rankName.toLowerCase()) {
-              case 'bronze': return 1;
-              case 'silver': return 2;
-              case 'gold': return 3;
-              case 'platinum': return 4;
-              default: return 0;
+              case 'bronze':
+                return 1;
+              case 'silver':
+                return 2;
+              case 'gold':
+                return 3;
+              case 'platinum':
+                return 4;
+              default:
+                return 0;
             }
           };
 
@@ -169,10 +145,7 @@ export const createPlayerProgressColumns = (selectedCategory: string): ColumnDef
         },
         header: ({ column }) => {
           return (
-            <Button
-              variant="ghost"
-              onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-            >
+            <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
               {selectedCategory} Rank
               <ArrowUpDown className="ml-2 h-4 w-4" />
             </Button>
@@ -183,10 +156,7 @@ export const createPlayerProgressColumns = (selectedCategory: string): ColumnDef
           if (!categoryData) return <span className="text-sm text-muted-foreground">-</span>;
 
           return (
-            <Badge
-              variant="outline"
-              className={`${getRankColor(categoryData.rank)} font-semibold`}
-            >
+            <Badge variant="outline" className={`${getRankColor(categoryData.rank)} font-semibold`}>
               {categoryData.rank}
             </Badge>
           );
@@ -195,11 +165,7 @@ export const createPlayerProgressColumns = (selectedCategory: string): ColumnDef
       {
         id: 'categoryProgress',
         header: () => {
-          return (
-            <div className="px-4">
-              {selectedCategory} Progress
-            </div>
-          );
+          return <div className="px-4">{selectedCategory} Progress</div>;
         },
         cell: ({ row }) => {
           const categoryData = row.original.categoryRanks[selectedCategory];
@@ -233,9 +199,7 @@ export const createPlayerProgressColumns = (selectedCategory: string): ColumnDef
           <div className="flex gap-2">
             {progressByRank.map((rankProgress) => (
               <div key={rankProgress.rank.name} className="flex flex-col items-center">
-                <div className="text-xs font-medium text-muted-foreground">
-                  {rankProgress.rank.name.substring(0, 3)}
-                </div>
+                <div className="text-xs font-medium text-muted-foreground">{rankProgress.rank.name.substring(0, 3)}</div>
                 <div className="text-sm font-bold">{rankProgress.percentage}%</div>
               </div>
             ))}

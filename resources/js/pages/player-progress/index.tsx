@@ -1,13 +1,12 @@
 import { createPlayerProgressColumns, type PlayerProgressData } from '@/components/data-table/columns/player-progress-columns';
 import { PlayerProgressDataTable } from '@/components/data-table/player-progress-data-table';
 import Heading from '@/components/heading';
-import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
 import playerProgress from '@/routes/player-progress';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/react';
-import { Award, BarChart3, Target, Users } from 'lucide-react';
+import { Award, BarChart3, Star, Users } from 'lucide-react';
 import * as React from 'react';
 import { Toaster } from 'sonner';
 
@@ -26,6 +25,12 @@ type PlayerProgressPageProps = {
       name: string;
       level: number;
     };
+    averageStarsByRank: {
+      Bronze: number;
+      Silver: number;
+      Gold: number;
+      Platinum: number;
+    };
     rankDistribution: {
       Bronze: number;
       Silver: number;
@@ -34,22 +39,6 @@ type PlayerProgressPageProps = {
     };
     averageCompletion: number;
   };
-};
-
-// Helper to get rank color
-const getRankColor = (rankName: string) => {
-  switch (rankName.toLowerCase()) {
-    case 'bronze':
-      return 'bg-orange-100 text-orange-800 border-orange-300 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-700';
-    case 'silver':
-      return 'bg-gray-100 text-gray-800 border-gray-300 dark:bg-gray-900/30 dark:text-gray-400 dark:border-gray-700';
-    case 'gold':
-      return 'bg-yellow-100 text-yellow-800 border-yellow-300 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-700';
-    case 'platinum':
-      return 'bg-slate-100 text-slate-800 border-slate-300 dark:bg-slate-900/30 dark:text-slate-400 dark:border-slate-700';
-    default:
-      return '';
-  }
 };
 
 // Helper to get rank bar color
@@ -124,17 +113,33 @@ export default function PlayerProgressPage({ players, stats }: PlayerProgressPag
             </CardContent>
           </Card>
 
-          {/* Average Club Rank */}
+          {/* Average Stars by Rank */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Average Club Rank</CardTitle>
-              <Target className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Avg Stars by Rank</CardTitle>
+              <Star className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="flex items-center gap-2">
-                <Badge variant="outline" className={`${getRankColor(stats.averageRank.name)} font-semibold`}>
-                  {stats.averageRank.name}
-                </Badge>
+              <div className="space-y-2">
+                {Object.entries(stats.averageStarsByRank).map(([rank, avgStars]) => (
+                  <div key={rank} className="flex items-center gap-2">
+                    <span className="w-8 text-xs font-medium text-muted-foreground">{rank.substring(0, 3)}</span>
+                    <div className="flex gap-0.5">
+                      {[1, 2, 3, 4, 5].map((star) => {
+                        const fillPercentage = Math.min(100, Math.max(0, (avgStars - (star - 1)) * 100));
+                        return (
+                          <div key={star} className="relative h-3 w-3">
+                            <Star className="absolute h-3 w-3 text-gray-300" />
+                            <div style={{ clipPath: `inset(0 ${100 - fillPercentage}% 0 0)` }}>
+                              <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <span className="text-xs font-bold">{avgStars}</span>
+                  </div>
+                ))}
               </div>
             </CardContent>
           </Card>
@@ -142,7 +147,7 @@ export default function PlayerProgressPage({ players, stats }: PlayerProgressPag
           {/* Rank Distribution */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Rank Distribution</CardTitle>
+              <CardTitle className="text-sm font-medium">Working Towards</CardTitle>
               <BarChart3 className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>

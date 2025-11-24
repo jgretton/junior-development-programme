@@ -26,22 +26,24 @@ class PlayerProgressController extends Controller
             ->select('player_progress_summary.*')
             ->get()
             ->map(function ($summary) {
-                $rankProgress = collect($summary->rank_progress ?? [])->map(function ($rankData) {
-                    return [
-                        'rank' => [
-                            'name' => $rankData['name'],
-                            'level' => $rankData['level'],
-                        ],
-                        'completed' => $rankData['completed'],
-                        'total' => $rankData['total'],
-                        'percentage' => $rankData['percentage'],
-                    ];
-                })->values()->toArray();
+                $rankProgress = collect($summary->rank_progress ?? [])
+                    ->map(function ($rankData) {
+                        return [
+                            'rank' => [
+                                'name' => $rankData['name'],
+                                'level' => $rankData['level'],
+                            ],
+                            'completed' => $rankData['completed'],
+                            'total' => $rankData['total'],
+                            'percentage' => $rankData['percentage'],
+                        ];
+                    })
+                    ->values()
+                    ->toArray();
 
                 return [
                     'id' => $summary->user_id,
                     'name' => $summary->user->name,
-                    'email' => $summary->user->email,
                     'currentRank' => [
                         'name' => $summary->currentRank->name ?? 'Bronze',
                         'level' => $summary->currentRank->level ?? 1,
@@ -71,6 +73,39 @@ class PlayerProgressController extends Controller
             }
         }
 
+        $averageStarsByRank = [
+            'Bronze' => 0,
+            'Silver' => 0,
+            'Gold' => 0,
+            'Platinum' => 0,
+        ];
+
+        // Calculate average stars for players working on each rank
+        // Only include players whose CURRENT rank matches
+        foreach (['Bronze', 'Silver', 'Gold', 'Platinum'] as $rankName) {
+            $totalStars = 0;
+            $playerCount = 0;
+
+            foreach ($players as $player) {
+                // Only include players whose current rank matches this rank
+                if ($player['currentRank']['name'] !== $rankName) {
+                    continue;
+                }
+
+                foreach ($player['progressByRank'] as $rankProgress) {
+                    if ($rankProgress['rank']['name'] === $rankName) {
+                        // Convert percentage to stars (0-100% → 0-5 stars)
+                        $stars = ($rankProgress['percentage'] / 100) * 5;
+                        $totalStars += $stars;
+                        $playerCount++;
+                        break;
+                    }
+                }
+            }
+
+            $averageStarsByRank[$rankName] = $playerCount > 0 ? round($totalStars / $playerCount, 1) : 0;
+        }
+
         // Calculate average rank
         $averageRankLevel = $players->count() > 0 ? $totalRankLevel / $players->count() : 0;
         $averageRankName = 'Bronze'; // Default
@@ -90,10 +125,9 @@ class PlayerProgressController extends Controller
                 'name' => $averageRankName,
                 'level' => round($averageRankLevel, 1),
             ],
+            'averageStarsByRank' => $averageStarsByRank,
             'rankDistribution' => $rankDistribution,
-            'averageCompletion' => $players->count() > 0
-                ? round($players->avg('overallProgress'), 1)
-                : 0,
+            'averageCompletion' => $players->count() > 0 ? round($players->avg('overallProgress'), 1) : 0,
         ];
 
         return Inertia::render('player-progress/index', [

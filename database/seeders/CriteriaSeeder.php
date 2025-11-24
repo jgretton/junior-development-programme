@@ -17,9 +17,8 @@ class CriteriaSeeder extends Seeder
     {
         foreach (Rank::all() as $rank) {
             foreach (Category::all() as $category) {
-                $count = rand(4, 7);
                 Criteria::factory()
-                    ->count($count)
+                    ->count(5)
                     ->create([
                         'rank_id' => $rank->id,
                         'category_id' => $category->id,

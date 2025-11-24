@@ -12,7 +12,7 @@ import { Toaster } from '@/components/ui/sonner';
 import AppLayout from '@/layouts/app-layout';
 import { Player, type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/react';
-import { AlertTriangleIcon, Archive, Baby, Clock, Users } from 'lucide-react';
+import { AlertTriangleIcon, Archive, Clock, UserCheck, Users } from 'lucide-react';
 import * as React from 'react';
 import { toast } from 'sonner';
 
@@ -78,7 +78,7 @@ export default function Index({ error, players, flash }: PageProps) {
           </div>
         </div>
       ) : (
-        <div className="container mx-auto max-w-7xl mt-10 px-4">
+        <div className="container mx-auto mt-10 max-w-7xl px-4">
           <div className="flex flex-row justify-between">
             <Heading title="Players" />
             <div className="flex">
@@ -94,20 +94,16 @@ export default function Index({ error, players, flash }: PageProps) {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{stats.total}</div>
-                <CardDescription className="text-xs text-muted-foreground">
-                  {stats.active} active, {stats.inactive} inactive
-                </CardDescription>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Junior Players</CardTitle>
-                <Baby className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-sm font-medium">Active Players</CardTitle>
+                <UserCheck className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{stats.junior}</div>
-                <CardDescription className="text-xs text-muted-foreground">{stats.adult} adult players</CardDescription>
+                <div className="text-2xl font-bold">{stats.active}</div>
               </CardContent>
             </Card>
 
