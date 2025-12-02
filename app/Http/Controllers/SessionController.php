@@ -200,41 +200,124 @@ class SessionController extends Controller
         // Render a single session.
         $session = Session::with(['attendees:id,name'])->findOrFail($training_session->id);
 
-        // Find player progress from session
-        $progress = PlayerProgress::with(['criteria', 'user'])
+        // Find player progress from session with relationships
+        $progress = PlayerProgress::with(['criteria.category', 'criteria.rank', 'user'])
             ->where('session_id', $training_session->id)
             ->get();
 
         // Get attending players
         $attendance = $session->attendees;
-        $attendingPlayerIds = $attendance->pluck('id');
+        $attendeeCount = $attendance->count();
 
-        // Build criteria progress array - group by criteria
-        $criteriaProgress = $progress->groupBy('criteria_id')->map(function ($records) use ($attendance, $attendingPlayerIds) {
-            $criteria = $records->first()->criteria;
-            $achievedPlayerIds = $records->pluck('user_id');
+        // Group progress by category, then by rank, then by criteria
+        $categoryProgress = $progress->groupBy('criteria.category.name')->map(function ($categoryRecords, $categoryName) {
+            $category = $categoryRecords->first()->criteria->category;
+            $uniquePlayerIds = $categoryRecords->pluck('user_id')->unique();
 
-            // Find IDs of players who didn't achieve it (attended but not in achieved list)
-            $notAchievedPlayerIds = $attendingPlayerIds->diff($achievedPlayerIds);
+            // Group by rank within this category
+            $rankGroups = $categoryRecords->groupBy('criteria.rank.name')->map(function ($rankRecords, $rankName) {
+                $rank = $rankRecords->first()->criteria->rank;
 
-            // Get the actual User models
-            $achievedPlayers = $attendance->whereIn('id', $achievedPlayerIds)->values();
-            $notAchievedPlayers = $attendance->whereIn('id', $notAchievedPlayerIds)->values();
+                // Group by criteria within this rank
+                $criteriaList = $rankRecords->groupBy('criteria_id')->map(function ($criteriaRecords) {
+                    $criteria = $criteriaRecords->first()->criteria;
+                    $achievedPlayers = $criteriaRecords->map(fn($record) => [
+                        'id' => $record->user->id,
+                        'name' => $record->user->name,
+                    ])->values();
+
+                    return [
+                        'id' => $criteria->id,
+                        'name' => $criteria->name,
+                        'achievedPlayers' => $achievedPlayers,
+                        'achievedCount' => $achievedPlayers->count(),
+                    ];
+                })->values();
+
+                return [
+                    'rank' => $rank->name,
+                    'rankLevel' => $rank->level,
+                    'criteria' => $criteriaList,
+                ];
+            })->sortBy('rankLevel')->values();
 
             return [
-                'criteria' => [
-                    'id' => $criteria->id,
-                    'name' => $criteria->name,
-                ],
-                'achieved' => $achievedPlayers,
-                'notAchieved' => $notAchievedPlayers,
+                'categoryId' => $category->id,
+                'categoryName' => $categoryName,
+                'playerCount' => $uniquePlayerIds->count(),
+                'ranks' => $rankGroups,
             ];
         })->values();
+
+        // Calculate rank progression statistics
+        $rankProgression = $progress->groupBy('criteria.rank.name')->map(function ($rankRecords, $rankName) {
+            $rank = $rankRecords->first()->criteria->rank;
+            $uniquePlayerIds = $rankRecords->pluck('user_id')->unique();
+
+            return [
+                'rank' => $rankName,
+                'rankLevel' => $rank->level,
+                'criteriaCount' => $rankRecords->groupBy('criteria_id')->count(),
+                'playerCount' => $uniquePlayerIds->count(),
+            ];
+        })->sortBy('rankLevel')->values();
+
+        // Calculate club-wide completion statistics for assessed criteria
+        $assessedCriteriaIds = $progress->pluck('criteria_id')->unique();
+        $totalClubMembers = \App\Models\User::where('role', 'player')->count();
+
+        $clubWideCompletion = PlayerProgress::whereIn('criteria_id', $assessedCriteriaIds)
+            ->select('criteria_id', \DB::raw('COUNT(DISTINCT user_id) as completion_count'))
+            ->groupBy('criteria_id')
+            ->get()
+            ->keyBy('criteria_id')
+            ->map(fn($item) => [
+                'completionCount' => $item->completion_count,
+                'totalMembers' => $totalClubMembers,
+                'percentage' => $totalClubMembers > 0 ? round(($item->completion_count / $totalClubMembers) * 100) : 0,
+            ]);
+
+        // Get previous achievers (players who completed criteria in other sessions)
+        $currentSessionPlayerIds = $progress->pluck('user_id')->unique();
+
+        $previousAchievers = PlayerProgress::whereIn('criteria_id', $assessedCriteriaIds)
+            ->where('session_id', '!=', $training_session->id)
+            ->whereNotIn('user_id', $currentSessionPlayerIds)
+            ->with(['user:id,name'])
+            ->orderBy('assessed_at', 'desc')
+            ->get()
+            ->groupBy('criteria_id')
+            ->map(fn($records) => $records->map(fn($record) => [
+                'id' => $record->user->id,
+                'name' => $record->user->name,
+                'assessedAt' => $record->assessed_at,
+            ])->values());
+
+        // Calculate summary statistics
+        $totalProgressions = $progress->count();
+        $totalCriteriaAssessed = $progress->pluck('criteria_id')->unique()->count();
+
+        // Find most improved category
+        $mostImprovedCategory = $categoryProgress->sortByDesc('playerCount')->first();
+
+        $summaryStats = [
+            'totalAttendance' => $attendeeCount,
+            'totalProgressions' => $totalProgressions,
+            'totalCriteriaAssessed' => $totalCriteriaAssessed,
+            'mostImprovedCategory' => $mostImprovedCategory ? [
+                'name' => $mostImprovedCategory['categoryName'],
+                'playerCount' => $mostImprovedCategory['playerCount'],
+            ] : null,
+        ];
 
         return Inertia::render('sessions/[id]/index', [
             'session' => $session,
             'attendance' => $attendance,
-            'criteriaProgress' => $criteriaProgress,
+            'categoryProgress' => $categoryProgress,
+            'rankProgression' => $rankProgression,
+            'summaryStats' => $summaryStats,
+            'clubWideCompletion' => $clubWideCompletion,
+            'previousAchievers' => $previousAchievers,
         ]);
     }
 

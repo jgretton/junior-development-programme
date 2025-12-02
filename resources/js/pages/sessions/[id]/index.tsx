@@ -1,29 +1,50 @@
 import Heading from '@/components/heading';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CollapsibleCard } from '@/components/ui/collapsible-card';
 import { Toaster } from '@/components/ui/sonner';
 import AppLayout from '@/layouts/app-layout';
 import { formatSessionDate, isSessionUpcoming } from '@/lib/session-utils';
 import { BreadcrumbItem } from '@/types';
-import { CriteriaProgress, Player, Session } from '@/types/session';
+import {
+  CategoryProgress,
+  ClubWideCompletion,
+  Player,
+  PreviousAchievers,
+  RankProgressionItem,
+  Session,
+  SummaryStats,
+} from '@/types/session';
 import { Head } from '@inertiajs/react';
-import { Calendar, Check, Target, Users, X } from 'lucide-react';
+import { Award, Calendar, ChevronDown, ChevronUp, Target, TrendingUp, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 interface SingleSessionPageProps {
   session: Session;
   attendance?: Player[];
-  criteriaProgress?: CriteriaProgress[];
+  categoryProgress?: CategoryProgress[];
+  rankProgression?: RankProgressionItem[];
+  summaryStats?: SummaryStats;
+  clubWideCompletion?: ClubWideCompletion;
+  previousAchievers?: PreviousAchievers;
   flash: { error: string; success: string; warning: string };
 }
 
-export default function SingleSessionPage({ session, attendance, flash, criteriaProgress }: SingleSessionPageProps) {
-  const [isCriteriaOpen, setIsCriteriaOpen] = useState(false);
-  const [highPerformersOpen, setHighPerformersOpen] = useState(false);
-  const [goodProgressOpen, setGoodProgressOpen] = useState(false);
-  const [needsSupportOpen, setNeedsSupportOpen] = useState(true);
+export default function SingleSessionPage({
+  session,
+  attendance,
+  categoryProgress,
+  rankProgression,
+  summaryStats,
+  clubWideCompletion,
+  previousAchievers,
+  flash,
+}: SingleSessionPageProps) {
+  const [expandedCategories, setExpandedCategories] = useState<Record<number, boolean>>({});
+  const [expandedCriteria, setExpandedCriteria] = useState<Record<number, boolean>>({});
+  const [showClubWide, setShowClubWide] = useState<Record<number, boolean>>({});
 
   useEffect(() => {
     if (flash?.success) toast.success(flash.success);
@@ -56,6 +77,18 @@ export default function SingleSessionPage({ session, attendance, flash, criteria
     if (isAssessed) return 'Assessed';
     if (isUpcoming) return 'Upcoming';
     return 'Pending';
+  };
+
+  const toggleCategory = (categoryId: number) => {
+    setExpandedCategories((prev) => ({ ...prev, [categoryId]: !prev[categoryId] }));
+  };
+
+  const toggleCriteria = (criteriaId: number) => {
+    setExpandedCriteria((prev) => ({ ...prev, [criteriaId]: !prev[criteriaId] }));
+  };
+
+  const toggleClubWide = (categoryId: number) => {
+    setShowClubWide((prev) => ({ ...prev, [categoryId]: !prev[categoryId] }));
   };
 
   return (
@@ -102,323 +135,221 @@ export default function SingleSessionPage({ session, attendance, flash, criteria
           </Card>
 
           {/* Assessment Results - Only show if assessed */}
-          {isAssessed && attendance && criteriaProgress && criteriaProgress.length > 0 && (() => {
-            // Calculate summary statistics
-            const totalPlayers = attendance.length;
-            const totalCriteria = criteriaProgress.length;
-
-            // Calculate player achievements
-            const playerStats = attendance.map(player => {
-              const achieved = criteriaProgress.filter(cp =>
-                cp.achieved.some(p => p.id === player.id)
-              ).length;
-              return {
-                ...player,
-                achievedCount: achieved,
-                percentage: Math.round((achieved / totalCriteria) * 100)
-              };
-            }).sort((a, b) => b.achievedCount - a.achievedCount);
-
-            // Calculate criteria statistics
-            const criteriaStats = criteriaProgress.map(cp => {
-              const achievedCount = cp.achieved.length;
-              const rate = Math.round((achievedCount / totalPlayers) * 100);
-              return {
-                ...cp,
-                achievedCount,
-                totalCount: totalPlayers,
-                rate,
-                status: rate >= 80 ? 'high' : rate >= 50 ? 'medium' : 'low'
-              };
-            }).sort((a, b) => b.rate - a.rate);
-
-            // Overall stats
-            const totalAssignments = criteriaProgress.reduce((sum, cp) => sum + cp.achieved.length, 0);
-            const possibleAssignments = totalPlayers * totalCriteria;
-            const overallRate = Math.round((totalAssignments / possibleAssignments) * 100);
-
-            const strugglingPlayers = playerStats.filter(p => p.percentage < 50);
-            const difficultCriteria = criteriaStats.filter(c => c.rate < 50);
-
-            return (
-              <>
-                {/* Summary Stats */}
-                <div className="grid gap-4 md:grid-cols-3">
-                  <Card>
-                    <CardContent className="pt-6">
-                      <div className="text-center">
-                        <p className="text-sm font-medium text-muted-foreground">Overall Achievement</p>
-                        <p className="mt-2 text-3xl font-bold">{overallRate}%</p>
-                        <p className="mt-1 text-xs text-muted-foreground">
-                          {totalAssignments} / {possibleAssignments} achievements
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardContent className="pt-6">
-                      <div className="text-center">
-                        <p className="text-sm font-medium text-muted-foreground">Players Attended</p>
-                        <p className="mt-2 text-3xl font-bold">{totalPlayers}</p>
-                        {strugglingPlayers.length > 0 && (
-                          <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
-                            {strugglingPlayers.length} below 50%
-                          </p>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardContent className="pt-6">
-                      <div className="text-center">
-                        <p className="text-sm font-medium text-muted-foreground">Criteria Assessed</p>
-                        <p className="mt-2 text-3xl font-bold">{totalCriteria}</p>
-                        {difficultCriteria.length > 0 && (
-                          <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
-                            {difficultCriteria.length} below 50%
-                          </p>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                {/* Player Performance by Tier */}
+          {isAssessed && categoryProgress && summaryStats && (
+            <>
+              {/* Summary Statistics */}
+              <div className="grid gap-4 md:grid-cols-4">
                 <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Users className="h-5 w-5" />
-                      Player Performance
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {/* Group players by performance tier */}
-                    {(() => {
-                      const highPerformers = playerStats.filter((p) => p.percentage >= 80);
-                      const goodProgress = playerStats.filter((p) => p.percentage >= 50 && p.percentage < 80);
-                      const needsSupport = playerStats.filter((p) => p.percentage < 50);
-
-                      return (
+                  <CardContent className="pt-6">
+                    <div className="text-center">
+                      <div className="flex items-center justify-center gap-2">
+                        <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                        <p className="text-sm font-medium text-muted-foreground">Most Improved Category</p>
+                      </div>
+                      {summaryStats.mostImprovedCategory ? (
                         <>
-                          {/* High Achievers */}
-                          <CollapsibleCard
-                            title={
-                              <div className="flex items-center gap-2">
-                                <div className="h-3 w-3 rounded-full bg-green-500" />
-                                <span>High Achievers (80-100%)</span>
-                              </div>
-                            }
-                            description={`${highPerformers.length} player${highPerformers.length !== 1 ? 's' : ''}`}
-                            open={highPerformersOpen}
-                            onOpenChange={setHighPerformersOpen}>
-                            {highPerformers.length > 0 ? (
-                              <div className="space-y-2">
-                                {highPerformers.map((player) => (
-                                  <div key={player.id} className="flex items-center justify-between rounded-lg bg-muted/30 p-2">
-                                    <span className="text-sm font-medium">{player.name}</span>
-                                    <div className="flex items-center gap-2">
-                                      <span className="text-sm text-muted-foreground">
-                                        {player.achievedCount}/{totalCriteria}
-                                      </span>
-                                      <Badge variant="secondary" className="bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400">
-                                        {player.percentage}%
-                                      </Badge>
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            ) : (
-                              <p className="text-sm text-muted-foreground">No players in this tier</p>
-                            )}
-                          </CollapsibleCard>
-
-                          {/* Good Progress */}
-                          <CollapsibleCard
-                            title={
-                              <div className="flex items-center gap-2">
-                                <div className="h-3 w-3 rounded-full bg-amber-500" />
-                                <span>Good Progress (50-79%)</span>
-                              </div>
-                            }
-                            description={`${goodProgress.length} player${goodProgress.length !== 1 ? 's' : ''}`}
-                            open={goodProgressOpen}
-                            onOpenChange={setGoodProgressOpen}>
-                            {goodProgress.length > 0 ? (
-                              <div className="space-y-2">
-                                {goodProgress.map((player) => (
-                                  <div key={player.id} className="flex items-center justify-between rounded-lg bg-muted/30 p-2">
-                                    <span className="text-sm font-medium">{player.name}</span>
-                                    <div className="flex items-center gap-2">
-                                      <span className="text-sm text-muted-foreground">
-                                        {player.achievedCount}/{totalCriteria}
-                                      </span>
-                                      <Badge variant="secondary" className="bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-400">
-                                        {player.percentage}%
-                                      </Badge>
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            ) : (
-                              <p className="text-sm text-muted-foreground">No players in this tier</p>
-                            )}
-                          </CollapsibleCard>
-
-                          {/* Needs Support */}
-                          <CollapsibleCard
-                            title={
-                              <div className="flex items-center gap-2">
-                                <div className="h-3 w-3 rounded-full bg-red-500" />
-                                <span>Needs Support (&lt;50%)</span>
-                              </div>
-                            }
-                            description={`${needsSupport.length} player${needsSupport.length !== 1 ? 's' : ''}`}
-                            open={needsSupportOpen}
-                            onOpenChange={setNeedsSupportOpen}>
-                            {needsSupport.length > 0 ? (
-                              <div className="space-y-2">
-                                {needsSupport.map((player) => (
-                                  <div key={player.id} className="flex items-center justify-between rounded-lg bg-muted/30 p-2">
-                                    <span className="text-sm font-medium">{player.name}</span>
-                                    <div className="flex items-center gap-2">
-                                      <span className="text-sm text-muted-foreground">
-                                        {player.achievedCount}/{totalCriteria}
-                                      </span>
-                                      <Badge variant="secondary" className="bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-400">
-                                        {player.percentage}%
-                                      </Badge>
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            ) : (
-                              <p className="text-sm text-muted-foreground">No players in this tier</p>
-                            )}
-                          </CollapsibleCard>
+                          <p className="mt-2 text-2xl font-bold">{summaryStats.mostImprovedCategory.name}</p>
+                          <p className="mt-1 text-sm text-muted-foreground">
+                            {summaryStats.mostImprovedCategory.playerCount} players
+                          </p>
                         </>
-                      );
-                    })()}
+                      ) : (
+                        <p className="mt-2 text-sm text-muted-foreground">No data</p>
+                      )}
+                    </div>
                   </CardContent>
                 </Card>
 
-                {/* Criteria Results */}
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="text-center">
+                      <div className="flex items-center justify-center gap-2">
+                        <Users className="h-4 w-4 text-muted-foreground" />
+                        <p className="text-sm font-medium text-muted-foreground">Total Attendance</p>
+                      </div>
+                      <p className="mt-2 text-2xl font-bold">{summaryStats.totalAttendance}</p>
+                      <p className="mt-1 text-sm text-muted-foreground">players attended</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="text-center">
+                      <div className="flex items-center justify-center gap-2">
+                        <Award className="h-4 w-4 text-muted-foreground" />
+                        <p className="text-sm font-medium text-muted-foreground">Total Progressions</p>
+                      </div>
+                      <p className="mt-2 text-2xl font-bold">{summaryStats.totalProgressions}</p>
+                      <p className="mt-1 text-sm text-muted-foreground">criteria completions</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="text-center">
+                      <div className="flex items-center justify-center gap-2">
+                        <Target className="h-4 w-4 text-muted-foreground" />
+                        <p className="text-sm font-medium text-muted-foreground">Total Criteria Assessed</p>
+                      </div>
+                      <p className="mt-2 text-2xl font-bold">{summaryStats.totalCriteriaAssessed}</p>
+                      <p className="mt-1 text-sm text-muted-foreground">unique criteria</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Rank Progression */}
+              {rankProgression && rankProgression.length > 0 && (
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                      <Target className="h-5 w-5" />
-                      Criteria Results
+                      <Award className="h-5 w-5" />
+                      Rank Progression
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    {criteriaStats.map((criteria) => (
-                      <div key={criteria.criteria.id} className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium">{criteria.criteria.name}</span>
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm text-muted-foreground">
-                              {criteria.achievedCount}/{criteria.totalCount}
-                            </span>
-                            <Badge
-                              variant={criteria.rate >= 80 ? 'default' : criteria.rate >= 50 ? 'secondary' : 'destructive'}
-                              className="min-w-[50px] justify-center">
-                              {criteria.rate}%
-                            </Badge>
-                          </div>
-                        </div>
-                        <div className="relative h-2 w-full overflow-hidden rounded-full bg-muted">
-                          <div
-                            className={`h-full transition-all ${
-                              criteria.rate >= 80
-                                ? 'bg-green-500'
-                                : criteria.rate >= 50
-                                  ? 'bg-amber-500'
-                                  : 'bg-red-500'
-                            }`}
-                            style={{ width: `${criteria.rate}%` }}
-                          />
+                    {rankProgression.map((rank) => (
+                      <div key={rank.rank} className="flex items-center justify-between rounded-lg border bg-muted/30 p-3">
+                        <div className="flex items-center gap-3">
+                          <Badge variant="outline" className="font-semibold">
+                            {rank.rank}
+                          </Badge>
+                          <span className="text-sm font-medium">
+                            {rank.criteriaCount} criteria completed by {rank.playerCount} players
+                          </span>
                         </div>
                       </div>
                     ))}
                   </CardContent>
                 </Card>
+              )}
 
-                {/* Detailed Breakdown - Collapsible */}
-                <CollapsibleCard
-                  title="Detailed Results"
-                  description="View which players achieved each criteria"
-                  open={isCriteriaOpen}
-                  onOpenChange={setIsCriteriaOpen}>
-                  <div className="space-y-6">
-                    {criteriaProgress.map((progress) => {
-                      const achievedCount = progress.achieved.length;
-                      const totalCount = progress.achieved.length + progress.notAchieved.length;
-                      const rate = Math.round((achievedCount / totalCount) * 100);
-
-                      return (
-                        <div key={progress.criteria.id} className="space-y-3">
-                          <div className="flex items-start justify-between">
-                            <div>
-                              <h4 className="font-medium">{progress.criteria.name}</h4>
-                              <p className="text-sm text-muted-foreground">
-                                {achievedCount} of {totalCount} players achieved ({rate}%)
-                              </p>
-                            </div>
-                            <Badge
-                              variant={rate >= 80 ? 'default' : rate >= 50 ? 'secondary' : 'destructive'}>
-                              {rate}%
-                            </Badge>
-                          </div>
-
-                          <div className="grid gap-3 sm:grid-cols-2">
-                            {/* Achieved */}
-                            <div className="rounded-lg border bg-green-50/50 p-3 dark:bg-green-950/20">
-                              <div className="mb-2 flex items-center gap-1.5 text-green-700 dark:text-green-400">
-                                <Check className="h-4 w-4" />
-                                <span className="text-sm font-medium">Achieved</span>
-                              </div>
-                              {progress.achieved.length > 0 ? (
-                                <div className="space-y-1">
-                                  {progress.achieved.map((player) => (
-                                    <div key={player.id} className="text-sm text-foreground/80">
-                                      {player.name}
-                                    </div>
-                                  ))}
+              {/* Category Progress */}
+              {categoryProgress.map((category) => (
+                <Card key={category.categoryId}>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="flex items-center gap-2">
+                        <Target className="h-5 w-5" />
+                        {category.categoryName} ({category.playerCount} players progressed)
+                      </CardTitle>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => toggleClubWide(category.categoryId)}
+                        className="text-xs text-muted-foreground hover:text-foreground">
+                        {showClubWide[category.categoryId] ? (
+                          <>
+                            Hide club-wide rates <ChevronUp className="ml-1 h-3 w-3" />
+                          </>
+                        ) : (
+                          <>
+                            Show club-wide rates <ChevronDown className="ml-1 h-3 w-3" />
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {/* Club-wide completion rates - expandable */}
+                    {showClubWide[category.categoryId] && clubWideCompletion && (
+                      <div className="mb-4 rounded-lg border bg-muted/30 p-4">
+                        <h4 className="mb-3 text-sm font-semibold">Club-wide completion rates</h4>
+                        <div className="space-y-2">
+                          {category.ranks.map((rankGroup) =>
+                            rankGroup.criteria.map((criteria) => {
+                              const clubData = clubWideCompletion[criteria.id];
+                              if (!clubData) return null;
+                              return (
+                                <div key={criteria.id} className="flex items-center justify-between text-sm">
+                                  <span className="text-muted-foreground">• {criteria.name}</span>
+                                  <span className="font-medium">
+                                    {clubData.completionCount}/{clubData.totalMembers} members ({clubData.percentage}%)
+                                  </span>
                                 </div>
-                              ) : (
-                                <p className="text-sm text-muted-foreground">None</p>
-                              )}
-                            </div>
-
-                            {/* Not Achieved */}
-                            <div className="rounded-lg border bg-red-50/50 p-3 dark:bg-red-950/20">
-                              <div className="mb-2 flex items-center gap-1.5 text-red-700 dark:text-red-400">
-                                <X className="h-4 w-4" />
-                                <span className="text-sm font-medium">Not Achieved</span>
-                              </div>
-                              {progress.notAchieved.length > 0 ? (
-                                <div className="space-y-1">
-                                  {progress.notAchieved.map((player) => (
-                                    <div key={player.id} className="text-sm text-foreground/80">
-                                      {player.name}
-                                    </div>
-                                  ))}
-                                </div>
-                              ) : (
-                                <p className="text-sm text-muted-foreground">None</p>
-                              )}
-                            </div>
-                          </div>
+                              );
+                            })
+                          )}
                         </div>
-                      );
-                    })}
-                  </div>
-                </CollapsibleCard>
-              </>
-            );
-          })()}
+                      </div>
+                    )}
 
+                    {/* Rank groups */}
+                    {category.ranks.map((rankGroup) => (
+                      <div key={rankGroup.rank} className="space-y-2">
+                        <h4 className="text-sm font-semibold text-muted-foreground">{rankGroup.rank}</h4>
+                        <div className="space-y-2">
+                          {rankGroup.criteria.map((criteria) => (
+                            <div key={criteria.id} className="space-y-2">
+                              <div className="flex items-center justify-between rounded-lg bg-muted/30 p-3">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm font-medium">↳ {criteria.name}</span>
+                                  <span className="text-sm text-muted-foreground">({criteria.achievedCount} players)</span>
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => toggleCriteria(criteria.id)}
+                                  className="text-xs text-muted-foreground hover:text-foreground">
+                                  View players →
+                                </Button>
+                              </div>
+
+                              {/* Expanded player details */}
+                              {expandedCriteria[criteria.id] && (
+                                <div className="ml-4 space-y-3 rounded-lg border bg-card p-4">
+                                  <div>
+                                    <h5 className="mb-2 text-sm font-semibold">Achieved in this session:</h5>
+                                    <div className="space-y-1">
+                                      {criteria.achievedPlayers.map((player) => (
+                                        <div key={player.id} className="text-sm text-foreground/80">
+                                          • {player.name}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+
+                                  {/* Previous achievers */}
+                                  {previousAchievers && previousAchievers[criteria.id] && previousAchievers[criteria.id].length > 0 && (
+                                    <div className="border-t pt-3">
+                                      <h5 className="mb-2 text-sm font-semibold text-muted-foreground">
+                                        Previously achieved ({previousAchievers[criteria.id].length} players):
+                                      </h5>
+                                      <div className="max-h-40 space-y-1 overflow-y-auto">
+                                        {previousAchievers[criteria.id].slice(0, 10).map((player) => (
+                                          <div key={player.id} className="flex items-center justify-between text-sm text-muted-foreground">
+                                            <span>• {player.name}</span>
+                                            <span className="text-xs">
+                                              {new Date(player.assessedAt).toLocaleDateString('en-GB', {
+                                                day: 'numeric',
+                                                month: 'short',
+                                                year: 'numeric',
+                                              })}
+                                            </span>
+                                          </div>
+                                        ))}
+                                        {previousAchievers[criteria.id].length > 10 && (
+                                          <div className="text-xs text-muted-foreground">
+                                            + {previousAchievers[criteria.id].length - 10} more players
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+              ))}
+            </>
+          )}
         </div>
       </div>
     </AppLayout>

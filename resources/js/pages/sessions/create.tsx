@@ -19,7 +19,7 @@ import { BreadcrumbItem } from '@/types';
 import { CriteriaData, CriterionItem } from '@/types/session';
 import { router } from '@inertiajs/react';
 import { Head } from '@inertiajs/react';
-import { ArrowLeft, Calendar as CalendarIcon, Check, CheckCircle2, ChevronDownIcon, ClipboardList, Loader2, Plus, Target, Users, X } from 'lucide-react';
+import { ArrowLeft, Calendar as CalendarIcon, Check, CheckCircle2, ChevronDownIcon, ClipboardList, Loader2, Plus, Search, Target, Users, X } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -78,6 +78,7 @@ export default function CreatePage({ players, criteriaData, existingAchievements
   const [assignments, setAssignments] = useState<PlayerAssignment>({});
   const [criteriaModalOpen, setCriteriaModalOpen] = useState(false);
   const [tempSelectedCriteria, setTempSelectedCriteria] = useState<number[]>([]);
+  const [playerSearchQuery, setPlayerSearchQuery] = useState('');
 
   // Form errors
   const [errors] = useState<Record<string, string>>({});
@@ -685,9 +686,6 @@ export default function CreatePage({ players, criteriaData, existingAchievements
             stepNumber={3}
             status={getStepStatus('assessment')}
             onEdit={() => goToStep('assessment')}
-            onContinue={handleReviewSession}
-            continueLabel="Review Session"
-            canContinue={isStep3Valid}
           >
             <div className="space-y-4">
               <div className="flex items-center justify-between">
@@ -702,16 +700,22 @@ export default function CreatePage({ players, criteriaData, existingAchievements
               {/* Two Column Layout */}
               <div className="grid gap-6 lg:grid-cols-[400px_1fr]">
                 {/* Left Panel: Selected Criteria List */}
-                <Card className="flex flex-col">
+                <Card className="flex h-[600px] flex-col">
                   <CardHeader className="pb-3">
                     <CardTitle className="flex items-center gap-2 text-base">
                       <Target className="h-4 w-4" />
                       Criteria ({selectedCriteriaIds.length})
                     </CardTitle>
                     <CardDescription>Click a criteria to assign players</CardDescription>
+                    <div className="mt-3">
+                      <Button onClick={openCriteriaModal} variant="outline" className="w-full" size="sm">
+                        <Plus className="mr-2 h-4 w-4" />
+                        Add Criteria
+                      </Button>
+                    </div>
                   </CardHeader>
                   <CardContent className="flex-1 overflow-hidden p-0">
-                    <ScrollArea className="h-[350px] px-6">
+                    <ScrollArea className="h-full px-6">
                       {selectedCriteriaIds.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-12 text-center">
                           <Target className="h-10 w-10 text-muted-foreground/50" />
@@ -719,7 +723,7 @@ export default function CreatePage({ players, criteriaData, existingAchievements
                             No criteria added yet
                           </p>
                           <p className="mt-1 text-xs text-muted-foreground">
-                            Click the button below to add criteria
+                            Click the button above to add criteria
                           </p>
                         </div>
                       ) : (
@@ -790,16 +794,10 @@ export default function CreatePage({ players, criteriaData, existingAchievements
                       )}
                     </ScrollArea>
                   </CardContent>
-                  <div className="border-t p-4">
-                    <Button onClick={openCriteriaModal} variant="outline" className="w-full">
-                      <Plus className="mr-2 h-4 w-4" />
-                      Add Criteria
-                    </Button>
-                  </div>
                 </Card>
 
                 {/* Right Panel: Player Selection */}
-                <Card className="flex flex-col">
+                <Card className="flex h-[600px] flex-col">
                   {currentCriteria ? (
                     <>
                       <CardHeader className="pb-3">
@@ -823,20 +821,29 @@ export default function CreatePage({ players, criteriaData, existingAchievements
                               Clear
                             </Button>
                           </div>
+                          <div className="relative">
+                            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                            <Input
+                              placeholder="Search players..."
+                              value={playerSearchQuery}
+                              onChange={(e) => setPlayerSearchQuery(e.target.value)}
+                              className="pl-9"
+                            />
+                          </div>
                         </div>
                       </CardHeader>
                       <CardContent className="flex-1 overflow-hidden p-0 px-6 pb-6">
-                        <ScrollArea className="h-[300px]">
-                          <PlayerSelectionList
-                            players={attendingPlayers}
-                            selectedPlayerIds={assignedPlayerIds}
-                            onTogglePlayer={togglePlayerAssignment}
-                            variant="achievement"
-                            showProgressBadges
-                            getPlayerProgress={getPlayerProgress}
-                            alreadyCompletedIds={alreadyCompletedPlayerIds}
-                          />
-                        </ScrollArea>
+                        <PlayerSelectionList
+                          players={attendingPlayers}
+                          selectedPlayerIds={assignedPlayerIds}
+                          onTogglePlayer={togglePlayerAssignment}
+                          variant="achievement"
+                          showProgressBadges
+                          getPlayerProgress={getPlayerProgress}
+                          alreadyCompletedIds={alreadyCompletedPlayerIds}
+                          hideSearch={true}
+                          externalSearchQuery={playerSearchQuery}
+                        />
                       </CardContent>
                     </>
                   ) : (
@@ -850,7 +857,7 @@ export default function CreatePage({ players, criteriaData, existingAchievements
                         </p>
                         <p className="mt-1 text-xs text-muted-foreground">
                           {selectedCriteriaIds.length === 0
-                            ? 'Use the "Add Criteria" button on the left'
+                            ? 'Use the "Add Criteria" button to begin'
                             : 'Click on any criteria to start assigning players'}
                         </p>
                       </div>
@@ -860,6 +867,20 @@ export default function CreatePage({ players, criteriaData, existingAchievements
               </div>
             </div>
           </AccordionCard>
+
+          {/* Review Session Button */}
+          {currentStep === 'assessment' && (
+            <div className="flex justify-end">
+              <Button
+                onClick={handleReviewSession}
+                disabled={!isStep3Valid}
+                size="lg"
+                className="min-w-[200px]"
+              >
+                Review Session
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 

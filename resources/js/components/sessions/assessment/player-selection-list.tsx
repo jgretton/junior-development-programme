@@ -20,6 +20,10 @@ interface PlayerSelectionListProps {
   variant?: 'attendance' | 'achievement';
   /** IDs of players who have already completed this criteria (shown as non-selectable with green tick) */
   alreadyCompletedIds?: string[];
+  /** Hide the internal search input (for external control) */
+  hideSearch?: boolean;
+  /** External search query (when hideSearch is true) */
+  externalSearchQuery?: string;
 }
 
 export function PlayerSelectionList({
@@ -30,8 +34,12 @@ export function PlayerSelectionList({
   getPlayerProgress,
   variant = 'attendance',
   alreadyCompletedIds = [],
+  hideSearch = false,
+  externalSearchQuery = '',
 }: PlayerSelectionListProps) {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [internalSearchQuery, setInternalSearchQuery] = useState('');
+
+  const searchQuery = hideSearch ? externalSearchQuery : internalSearchQuery;
 
   const filteredPlayers = useMemo(() => {
     let result = players;
@@ -72,19 +80,21 @@ export function PlayerSelectionList({
   const currentColors = colors[variant];
 
   return (
-    <div className="space-y-4">
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          placeholder="Search players..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-9"
-        />
-      </div>
+    <>
+      {!hideSearch && (
+        <div className="relative mb-4">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Search players..."
+            value={internalSearchQuery}
+            onChange={(e) => setInternalSearchQuery(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+      )}
 
       <TooltipProvider>
-        <div className="h-[500px] overflow-y-auto pr-4">
+        <div className={hideSearch ? 'h-full overflow-y-auto pr-4' : 'h-[500px] overflow-y-auto pr-4'}>
           <div className="space-y-2">
             {filteredPlayers.map((player) => {
               const isSelected = selectedPlayerIds.includes(player.id);
@@ -137,6 +147,6 @@ export function PlayerSelectionList({
           </div>
         </div>
       </TooltipProvider>
-    </div>
+    </>
   );
 }

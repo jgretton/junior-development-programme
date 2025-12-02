@@ -150,26 +150,33 @@ class PlayerProgressSummaryService
     }
 
     /**
-     * Determine the current overall rank (lowest incomplete rank)
+     * Determine the current overall rank (highest fully completed rank)
      */
     private function determineCurrentRank(array $rankProgress, $ranks): ?int
     {
+        $currentRankId = $ranks->first()->id ?? null; // Start with Bronze (lowest rank)
+
         foreach ($ranks as $rank) {
             $progress = $rankProgress[$rank->name] ?? null;
-            if ($progress && $progress['percentage'] < 100) {
-                return $rank->id;
+            // If this rank is 100% complete, player has achieved this rank
+            if ($progress && $progress['percentage'] >= 100) {
+                $currentRankId = $rank->id;
+            } else {
+                // Stop at the first incomplete rank - player's current rank is the last complete one
+                break;
             }
         }
 
-        // If all ranks are 100%, return the highest rank
-        return $ranks->last()->id ?? null;
+        return $currentRankId;
     }
 
     /**
-     * Determine the category rank (lowest incomplete rank for this category)
+     * Determine the category rank (highest fully completed rank for this category)
      */
     private function determineCategoryRank(int $userId, int $categoryId, $ranks, array $completedByCategoryRank): string
     {
+        $currentRankName = $ranks->first()->name ?? 'Bronze'; // Start with Bronze
+
         foreach ($ranks as $rank) {
             $total = Criteria::where('category_id', $categoryId)
                 ->where('rank_id', $rank->id)
@@ -182,13 +189,16 @@ class PlayerProgressSummaryService
             $completed = $completedByCategoryRank[$categoryId][$rank->id] ?? 0;
             $percentage = round(($completed / $total) * 100);
 
-            if ($percentage < 100) {
-                return $rank->name;
+            // If this rank is 100% complete, player has achieved this rank for this category
+            if ($percentage >= 100) {
+                $currentRankName = $rank->name;
+            } else {
+                // Stop at the first incomplete rank - player's current rank is the last complete one
+                break;
             }
         }
 
-        // If all ranks are 100%, return the highest rank
-        return $ranks->last()->name ?? 'Bronze';
+        return $currentRankName;
     }
 
     /**

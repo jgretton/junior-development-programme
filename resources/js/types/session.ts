@@ -71,3 +71,59 @@ export interface CriteriaProgress {
     achieved: Player[];
     notAchieved: Player[];
 }
+
+// New analytics types
+export interface CriteriaItem {
+    id: number;
+    name: string;
+    achievedPlayers: Player[];
+    achievedCount: number;
+}
+
+export interface RankGroup {
+    rank: string;
+    rankLevel: number;
+    criteria: CriteriaItem[];
+}
+
+export interface CategoryProgress {
+    categoryId: number;
+    categoryName: string;
+    playerCount: number;
+    ranks: RankGroup[];
+}
+
+export interface RankProgressionItem {
+    rank: string;
+    rankLevel: number;
+    criteriaCount: number;
+    playerCount: number;
+}
+
+export interface SummaryStats {
+    totalAttendance: number;
+    totalProgressions: number;
+    totalCriteriaAssessed: number;
+    mostImprovedCategory: {
+        name: string;
+        playerCount: number;
+    } | null;
+}
+
+export interface ClubWideCompletion {
+    [criteriaId: number]: {
+        completionCount: number;
+        totalMembers: number;
+        percentage: number;
+    };
+}
+
+export interface PreviousAchiever {
+    id: number;
+    name: string;
+    assessedAt: string;
+}
+
+export interface PreviousAchievers {
+    [criteriaId: number]: PreviousAchiever[];
+}
